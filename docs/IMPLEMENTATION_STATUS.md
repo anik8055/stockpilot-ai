@@ -15,7 +15,7 @@ device; **Not built** = deliberately left out.
 | 5 | Invoice extraction (PDF text, rules, optional AI, OCR optional), review, draft receipts; Ask StockPilot; weekly reports | Done |
 | 6 | Plans/entitlements, quotas, AI cost controls, settings, audit log, deletion, tests, CI, Docker, deployment docs | Done |
 | 7 | Capacitor Android project | Done (code) — **APK not built, not device-tested** (Android SDK downloads blocked in the build environment) |
-| 8 | Final audit | See README *Test results* |
+| 8 | Final audit: lint, typecheck, 148 Vitest, production build, 11 Playwright — all passing (29 Oct 2026) | Done |
 
 ## Feature checklist
 
