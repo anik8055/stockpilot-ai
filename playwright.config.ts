@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const port = Number(process.env.E2E_PORT ?? 3000);
+const port = Number(process.env.E2E_PORT ?? 3100);
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined;
 
 export default defineConfig({
@@ -22,7 +22,8 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: /mobile\.spec\.ts/ },
   ],
   webServer: {
-    command: process.env.E2E_SERVER_COMMAND ?? `npm run dev -- -p ${port}`,
+    // Production server (no file watcher). Run `npm run build` first. RATE_LIMIT_RELAXED is for this test server only.
+    command: process.env.E2E_SERVER_COMMAND ?? `RATE_LIMIT_RELAXED=1 npx next start -p ${port}`,
     url: `http://localhost:${port}/api/health`,
     reuseExistingServer: true,
     timeout: 180_000,

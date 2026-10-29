@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { fixture, salesCsv, signUp, uploadImport } from "./helpers";
+import { fixture, salesCsv, signIn, signUp, uploadImport } from "./helpers";
 
 /**
  * End-to-end: register → create business → import items, stock (fixing a mapping) and sales → dashboard →
@@ -54,11 +54,7 @@ test("register, create a business and import data", async ({ page }) => {
 });
 
 test("dashboard and low-stock views reflect the imported data", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill("e2e-Password-2026");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/app\/dashboard/);
+  await signIn(page, email);
   await expect(page.getByRole("link", { name: /^Active products 6/ })).toBeVisible();
   // Paint brushes were counted as 0 → out of stock; screwdriver sets never sold → non-moving
   await page.getByRole("link", { name: /^Out of stock 1/ }).click();
@@ -68,4 +64,30 @@ test("dashboard and low-stock views reflect the imported data", async ({ page })
   await expect(page.getByRole("link", { name: "Screwdriver Set 6pc" })).toBeVisible();
   await page.goto("/app/analytics?view=low");
   await expect(page.getByRole("link", { name: "Measuring Tape 5m" })).toBeVisible();
+});
+
+test("purchase list → draft PO → PDF → mark sent → receive goods", async ({ page }) => {
+  await signIn(page, email);
+  await page.goto("/app/purchasing");
+  await expect(page.getByRole("heading", { name: "Purchase list" })).toBeVisible();
+  // Imported products named their supplier, so items are grouped under it
+  const createBtn = page.getByRole("button", { name: /Create draft PO for Test Tools Supplier/ });
+  await expect(createBtn).toBeVisible();
+  await createBtn.click();
+  await expect(page).toHaveURL(/\/app\/purchase-orders\/[0-9a-f-]+\?created=1/);
+  await expect(page.getByText(/Draft PO-0001 created/)).toBeVisible();
+
+  const pdf = await page.request.get(page.url().replace("/app/purchase-orders/", "/api/purchase-orders/").replace("?created=1", "/pdf"));
+  expect(pdf.status()).toBe(200);
+  expect(pdf.headers()["content-type"]).toContain("application/pdf");
+  expect((await pdf.body()).subarray(0, 4).toString()).toBe("%PDF");
+
+  await page.getByRole("button", { name: "Mark as sent" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Mark as sent" }).click();
+  await expect(page.getByText("Its quantities now count as stock on order")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Receive goods" })).toBeVisible();
+  await page.getByRole("button", { name: "Confirm receipt and update stock" }).click();
+  await expect(page.getByText(/Stock updated for 3 item/)).toBeVisible();
+  await expect(page.getByText("Received", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("GRN-0001")).toBeVisible();
 });

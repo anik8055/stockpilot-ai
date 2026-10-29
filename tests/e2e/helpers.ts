@@ -47,3 +47,11 @@ export async function uploadImport(page: Page, kindLabel: string, file: string |
   await page.getByRole("button", { name: "Upload and check columns" }).click();
   await expect(page.getByRole("heading", { name: "Match your columns" })).toBeVisible();
 }
+
+export async function signIn(page: Page, email: string, password = "e2e-Password-2026") {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/app\//);
+}

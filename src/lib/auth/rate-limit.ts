@@ -11,7 +11,11 @@ export class RateLimitError extends Error {
  * Fixed-window counter stored in Postgres (works on serverless without Redis).
  * Returns remaining count; throws RateLimitError when exceeded.
  */
-export async function rateLimit(key: string, limit: number, windowSeconds: number): Promise<number> {
+export async function rateLimit(key: string, baseLimit: number, windowSeconds: number): Promise<number> {
+  // Development and automated test servers hit the same endpoints many times from one IP. RATE_LIMIT_RELAXED must
+  // never be set on a real deployment; production keeps the real limits.
+  const relaxed = (process.env.NODE_ENV !== "production" && process.env.RATE_LIMIT_STRICT !== "1") || process.env.RATE_LIMIT_RELAXED === "1";
+  const limit = relaxed ? baseLimit * 50 : baseLimit;
   const row = await withAdmin((tx) =>
     tx.one<{ count: number; window_start: Date }>(
       `INSERT INTO rate_limits (key, window_start, count) VALUES ($1, now(), 1)
