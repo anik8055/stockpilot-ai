@@ -91,3 +91,45 @@ test("purchase list → draft PO → PDF → mark sent → receive goods", async
   await expect(page.getByText("Received", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("GRN-0001")).toBeVisible();
 });
+
+test("review a sample supplier invoice and receive it into stock", async ({ page }) => {
+  await signIn(page, email);
+  const sample = await page.request.get("/api/invoices/sample");
+  expect(sample.status()).toBe(200);
+  const pdf = await sample.body();
+  await page.goto("/app/invoices");
+  await page.locator('input[type="file"]').setInputFiles({ name: "sample-invoice.pdf", mimeType: "application/pdf", buffer: pdf });
+  await page.getByRole("button", { name: "Upload and read" }).click();
+  await expect(page.getByRole("heading", { name: /Invoice SMP\// })).toBeVisible();
+  await expect(page.getByText("Line amounts and totals reconcile.")).toBeVisible();
+  // every line was matched to an existing product
+  await expect(page.getByText(/line\(s\) still need a product/)).toHaveCount(0);
+  await page.getByRole("button", { name: "Create goods receipt" }).click();
+  await expect(page.getByRole("heading", { name: /Goods receipt GRN-/ })).toBeVisible();
+  await expect(page.getByText("Draft — stock has not changed yet")).toBeVisible();
+  await page.getByRole("button", { name: "Confirm and add to stock" }).click();
+  await expect(page.getByText(/item\(s\) added to stock/)).toBeVisible();
+});
+
+test("generate a weekly report with PDF and CSV exports", async ({ page }) => {
+  await signIn(page, email);
+  await page.goto("/app/reports");
+  await page.getByRole("button", { name: "Generate report" }).click();
+  await expect(page.getByRole("heading", { name: /Inventory report/ })).toBeVisible();
+  await expect(page.getByText("Assumptions behind these numbers")).toBeVisible();
+  const pdfUrl = await page.getByRole("link", { name: "Download PDF" }).getAttribute("href");
+  const pdf = await page.request.get(pdfUrl!);
+  expect((await pdf.body()).subarray(0, 4).toString()).toBe("%PDF");
+  const csvUrl = await page.getByRole("link", { name: "CSV" }).first().getAttribute("href");
+  const csv = await page.request.get(csvUrl!);
+  expect(await csv.text()).toContain("SKU");
+});
+
+test("ask the assistant a question grounded in the imported data", async ({ page }) => {
+  await signIn(page, email);
+  await page.goto("/app/assistant");
+  await page.getByLabel("Your question").fill("Which products have not sold in 90 days?");
+  await page.getByRole("button", { name: "Ask" }).click();
+  await expect(page.getByText("In stock with no sales in the last 90 days")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Screwdriver Set 6pc" })).toBeVisible();
+});

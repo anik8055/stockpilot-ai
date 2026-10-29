@@ -103,7 +103,7 @@ export async function monthlyUsage(db: Tx, businessId: string) {
   return db.one<{ imports: number; ai: number; invoices: number }>(
     `SELECT
        (SELECT count(*)::int FROM import_jobs WHERE business_id = $1 AND status = 'committed' AND committed_at >= date_trunc('month', now())) AS imports,
-       (SELECT count(*)::int FROM ai_usage WHERE business_id = $1 AND feature = 'assistant' AND status <> 'skipped' AND created_at >= date_trunc('month', now())) AS ai,
+       (SELECT count(DISTINCT coalesce(request_id::text, id::text))::int FROM ai_usage WHERE business_id = $1 AND feature = 'assistant' AND status <> 'skipped' AND created_at >= date_trunc('month', now())) AS ai,
        (SELECT count(*)::int FROM invoice_documents WHERE business_id = $1 AND created_at >= date_trunc('month', now())) AS invoices`,
     [businessId],
   );
