@@ -49,3 +49,7 @@ next-env.d.ts
 *.jks
 android/app/release/
 shot.tmp.mjs
+android/app/build/
+android/.gradle/
+android/local.properties
+android/keystore.properties

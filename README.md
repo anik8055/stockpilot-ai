@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StockPilot AI
 
-## Getting Started
+Inventory intelligence for Indian wholesalers, distributors, hardware shops, electrical suppliers and automobile
+spare-parts dealers. Customers import the Excel/CSV exports they already have (Tally, Busy, Marg or plain sheets) and see
+what to reorder, what is not selling, and how much money is tied up in stock — without replacing their billing software.
 
-First, run the development server:
+> **Status:** working MVP, tested locally (see *Test results*). It has **not** been deployed anywhere, payments are not
+> integrated, and the Android project has been generated but not built or run on a device. See
+> [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md) for the full checklist.
+
+## What it does
+
+| Area | Highlights |
+|---|---|
+| Imports | CSV/XLSX, header-row detection under title rows, 100+ header synonyms, forced confirmation of uncertain columns, Indian number/date parsing, unit conversions, row-level error report, saved mappings, templates, idempotent re-imports |
+| Stock ledger | Append-only movements; stock counts post the difference; sales history never reduces stock twice |
+| Dashboard & analysis | Defined, drill-down metrics; low/out/excess/non-moving/slow stock with the exact rule; 30/60/90/180-day windows; duplicate and cost-jump detection |
+| Reorder engine | `ROP = avg daily sales × lead time + safety stock`; stockout days excluded from demand; inbound counted once; MOQ/pack rounding; provisional fallbacks; reasoning shown |
+| Purchasing | Supplier-wise draft POs, PO PDF, "mark as sent", partial/idempotent goods receipts |
+| Supplier invoices | PDF text extraction → rule-based structuring → optional AI structuring of the text → arithmetic checks → conservative SKU matching → editable review → draft receipt |
+| Ask StockPilot | Read-only data tools compute every figure; the AI only routes and explains, and explanations with figures not in the data are discarded; works with AI off |
+| Reports | Weekly report on screen, PDF and CSV, with assumptions and data gaps |
+| SaaS | Multi-tenant workspaces with RLS, roles, join codes, plan entitlements, trial, usage quotas, audit log, account/workspace deletion |
+
+## Stack
+
+Next.js 16 (App Router) · TypeScript strict · Tailwind CSS 4 · PostgreSQL 16 with Row Level Security (`pg`, SQL
+migrations) · Zod · ExcelJS + PapaParse · PDFKit · unpdf (pdf.js) · Recharts · argon2 · Vitest · Playwright · Capacitor
+(Android). AI: Groq or any OpenAI-compatible API, optional.
+
+## Requirements
+
+- Node.js 22 (20.9+ works), npm 10
+- PostgreSQL 15+ (16 recommended)
+- Optional: `tesseract` and `pdftoppm` for OCR of scanned invoices
+
+## Local development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci
+cp .env.example .env.local          # then edit the database URLs
+
+# create roles and databases (adjust passwords)
+psql -U postgres -c "CREATE ROLE stockpilot LOGIN CREATEDB PASSWORD 'stockpilot';"
+psql -U postgres -c "CREATE ROLE stockpilot_app LOGIN NOBYPASSRLS PASSWORD 'stockpilot_app';"
+psql -U postgres -c "CREATE DATABASE stockpilot_dev OWNER stockpilot;"
+
+npm run db:migrate                   # apply migrations
+npm run db:seed                      # demo login with a synthetic workspace (prints the credentials)
+npm run dev                          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app connects as `stockpilot_app` (`DATABASE_URL`) for all tenant data; `DATABASE_ADMIN_URL` (schema owner) is used for
+migrations, sign-in/sessions and creating workspaces. **The app role must not be a superuser or have BYPASSRLS.**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Password-reset emails are printed to the server console in development when no email provider is configured.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Commands
 
-## Learn More
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build / server |
+| `npm run lint` · `npm run typecheck` | ESLint · TypeScript |
+| `npm run db:migrate` | Apply pending migrations (`node db/migrate.mjs`) |
+| `npm run db:seed` | Create `demo@stockpilot.local` with a synthetic demo workspace (refuses to run in production) |
+| `npm test` | Unit + integration tests (needs the `stockpilot_test` database: `createdb -O stockpilot stockpilot_test`) |
+| `npm run test:e2e` | Playwright end-to-end tests against a production build (`npm run build` first). Set `PLAYWRIGHT_CHROMIUM_PATH` if you use a system Chromium |
 
-To learn more about Next.js, take a look at the following resources:
+Integration tests **drop and recreate** the schema of `stockpilot_test` only (they refuse any other database name).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Test results (last run)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Vitest: **148 tests passing** across 13 files (unit: engines, parsing, invoices, AI guards; integration against real
+  Postgres: tenant isolation, imports, purchasing, invoices, assistant, reports, entitlements, deletion).
+- Playwright: **11 passing** — 10 desktop (auth, register → business → imports with a mapping fix → dashboard → purchase
+  list → draft PO → PDF → receive goods → invoice review → report → assistant) and 1 mobile (Pixel 7 layout).
 
-## Deploy on Vercel
+## Configuration
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+All settings are environment variables — see [`.env.example`](.env.example). Plans, limits and indicative prices
+(₹2,499 Starter, ₹4,999 Growth, custom Business) are rows in the `plans` table, enforced server-side.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Documentation
+
+- [Product requirements](docs/PRD.md) · [Architecture & decisions](docs/ARCHITECTURE.md) · [Database](docs/DATABASE.md)
+- [Deployment & hosting comparison](docs/DEPLOYMENT.md) · [Security & privacy](docs/SECURITY.md) · [Risks](docs/RISKS.md)
+- [Android](docs/ANDROID.md) · [Launch checklist](docs/LAUNCH_CHECKLIST.md) · [Implementation status](docs/IMPLEMENTATION_STATUS.md)
+
+## Project layout
+
+```
+db/migrations/        versioned SQL (schema, RLS, plans)        db/migrate.mjs   migration runner
+src/lib/domain/       pure, unit-tested logic: demand, reorder, slow-moving, units, money, imports, invoices
+src/lib/services/     DB-backed services: imports, catalogue, analysis, purchasing, invoices, reports, assistant
+src/lib/ai/           provider abstraction (Groq / OpenAI-compatible)
+src/lib/auth|db|tenant  sessions, passwords, rate limits, pools + RLS context, membership checks
+src/app/(marketing)   public site            src/app/(auth)  sign-in, sign-up, onboarding
+src/app/app/          the product            src/app/api/    uploads, exports, PDFs, health
+tests/unit|integration|e2e                   assets/fonts    PDF fonts (Noto Sans, OFL)
+android/              Capacitor Android project               capacitor.config.ts
+```
