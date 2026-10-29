@@ -11,6 +11,11 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Cache Components is intentionally off: nearly every page is per-tenant and per-request.
   poweredByHeader: false,
+  turbopack: {
+    rules: {
+      "*.css": { loaders: ["@tailwindcss/turbopack"], as: "*.css" },
+    },
+  },
   serverExternalPackages: ["@node-rs/argon2", "pdfkit", "exceljs", "unpdf", "pg"],
   experimental: {
     serverActions: { bodySizeLimit: "12mb" },

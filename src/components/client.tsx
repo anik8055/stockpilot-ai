@@ -26,7 +26,14 @@ export function ActionForm({
   className?: string;
   resetOnSuccess?: boolean;
 }) {
-  const [state, formAction] = useActionState(action, null);
+  // Carry the submitted text values back on failure so React's post-action form reset keeps what the user typed.
+  const [state, formAction] = useActionState(async (prev: ActionResult | null, fd: FormData) => {
+    const res = await action(prev, fd);
+    if (res.ok) return res;
+    const values: Record<string, string> = {};
+    for (const [k, v] of fd.entries()) if (typeof v === "string" && !/password|token/i.test(k)) values[k] = v;
+    return { ...res, values };
+  }, null);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok && resetOnSuccess) ref.current?.reset();

@@ -1,0 +1,9 @@
+Ganesh Hardware Mart — Stock Item List (synthetic test data)
+
+Part Number,Stock Item,Category,UOM,Cost Price,MRP,Vendor,Reorder Level
+HW-HAM-500,Claw Hammer 500g,Hand Tools,Nos,210,299,Test Tools Supplier,6
+HW-SCR-SET,Screwdriver Set 6pc,Hand Tools,Nos,180,260,Test Tools Supplier,5
+HW-TAPE-5M,Measuring Tape 5m,Measuring,Nos,95,140,Test Tools Supplier,10
+HW-DRL-13,Drill Machine 13mm,Power Tools,Nos,1850,2600,Test Power Tools Co,2
+HW-NAIL-2,Wire Nails 2 inch,Fasteners,kg,88,120,Test Fasteners,20
+HW-PAINT-BR,Paint Brush 2 inch,Painting,Nos,35,55,Test Tools Supplier,24

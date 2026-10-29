@@ -78,7 +78,7 @@ export async function createBusinessAction(_: ActionResult | null, fd: FormData)
   return runAction("onboarding.create", async () => {
     const session = await requireSessionForOnboarding();
     await rateLimit(`create-business:${session.user.id}`, 10, 3600);
-    const b = await createBusiness(session.user.id, businessSchema.parse(formObject(fd)) as z.input<typeof businessSchema>);
+    const b = await createBusiness(session.user.id, formObject(fd) as z.input<typeof businessSchema>);
     await setActiveBusiness(session.id, session.user.id, b.id);
     redirect("/app/imports?welcome=1");
   });

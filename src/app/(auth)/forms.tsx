@@ -9,14 +9,18 @@ import { createBusinessAction, createDemoAction, forgotPasswordAction, joinBusin
 export function LoginForm({ next }: { next?: string }) {
   return (
     <ActionForm action={loginAction} className="space-y-4">
+      {(s) => (
+      <>
       <input type="hidden" name="next" value={next ?? ""} />
       <Field label="Email" htmlFor="email">
-        <Input id="email" name="email" type="email" autoComplete="email" required autoFocus />
+        <Input id="email" name="email" defaultValue={s?.values?.email} type="email" autoComplete="email" required autoFocus />
       </Field>
       <Field label="Password" htmlFor="password" hint={<Link href="/forgot-password" className="text-signal hover:underline">Forgot password?</Link>}>
         <Input id="password" name="password" type="password" autoComplete="current-password" required />
       </Field>
       <SubmitButton className="w-full" pendingLabel="Signing in…">Sign in</SubmitButton>
+      </>
+      )}
     </ActionForm>
   );
 }
@@ -27,10 +31,10 @@ export function SignupForm() {
       {(s) => (
         <>
           <Field label="Your name" htmlFor="name" error={s?.fieldErrors?.name}>
-            <Input id="name" name="name" autoComplete="name" required autoFocus aria-invalid={!!s?.fieldErrors?.name} />
+            <Input id="name" name="name" defaultValue={s?.values?.name} autoComplete="name" required autoFocus aria-invalid={!!s?.fieldErrors?.name} />
           </Field>
           <Field label="Work email" htmlFor="email" error={s?.fieldErrors?.email}>
-            <Input id="email" name="email" type="email" autoComplete="email" required aria-invalid={!!s?.fieldErrors?.email} />
+            <Input id="email" name="email" defaultValue={s?.values?.email} type="email" autoComplete="email" required aria-invalid={!!s?.fieldErrors?.email} />
           </Field>
           <Field label="Password" htmlFor="password" error={s?.fieldErrors?.password} hint="At least 10 characters, with a letter and a number.">
             <Input id="password" name="password" type="password" autoComplete="new-password" required aria-invalid={!!s?.fieldErrors?.password} />
@@ -51,10 +55,14 @@ export function SignupForm() {
 export function ForgotForm() {
   return (
     <ActionForm action={forgotPasswordAction} className="space-y-4">
+      {(s) => (
+      <>
       <Field label="Email" htmlFor="email">
-        <Input id="email" name="email" type="email" autoComplete="email" required autoFocus />
+        <Input id="email" name="email" defaultValue={s?.values?.email} type="email" autoComplete="email" required autoFocus />
       </Field>
       <SubmitButton className="w-full" pendingLabel="Sending…">Send reset link</SubmitButton>
+      </>
+      )}
     </ActionForm>
   );
 }
@@ -105,10 +113,10 @@ export function OnboardingForms({ hasDemo }: { hasDemo: boolean }) {
           {(s) => (
             <>
               <Field label="Business name" htmlFor="name" error={s?.fieldErrors?.name}>
-                <Input id="name" name="name" required autoFocus placeholder="e.g. Sharma Electricals" aria-invalid={!!s?.fieldErrors?.name} />
+                <Input id="name" name="name" defaultValue={s?.values?.name} required autoFocus placeholder="e.g. Sharma Electricals" aria-invalid={!!s?.fieldErrors?.name} />
               </Field>
               <Field label="What do you sell?" htmlFor="industry">
-                <Select id="industry" name="industry" defaultValue="electrical">
+                <Select id="industry" name="industry" defaultValue={s?.values?.industry ?? "electrical"}>
                   <option value="electrical">Electrical supplies</option>
                   <option value="hardware">Hardware & tools</option>
                   <option value="auto_parts">Automobile spare parts</option>
@@ -119,14 +127,14 @@ export function OnboardingForms({ hasDemo }: { hasDemo: boolean }) {
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="City" htmlFor="city">
-                  <Input id="city" name="city" autoComplete="address-level2" />
+                  <Input id="city" name="city" defaultValue={s?.values?.city} autoComplete="address-level2" />
                 </Field>
                 <Field label="State" htmlFor="state">
-                  <Input id="state" name="state" autoComplete="address-level1" />
+                  <Input id="state" name="state" defaultValue={s?.values?.state} autoComplete="address-level1" />
                 </Field>
               </div>
               <Field label="GSTIN (optional)" htmlFor="gstin" error={s?.fieldErrors?.gstin} hint="Printed on your purchase orders.">
-                <Input id="gstin" name="gstin" maxLength={15} className="uppercase" aria-invalid={!!s?.fieldErrors?.gstin} />
+                <Input id="gstin" name="gstin" defaultValue={s?.values?.gstin} maxLength={15} className="uppercase" aria-invalid={!!s?.fieldErrors?.gstin} />
               </Field>
               <SubmitButton className="w-full" pendingLabel="Creating workspace…">Create workspace</SubmitButton>
             </>

@@ -10,19 +10,19 @@ export function ContactForm() {
       {(s) => (
         <>
           <Field label="Your name" htmlFor="name" error={s?.fieldErrors?.name}>
-            <Input id="name" name="name" autoComplete="name" required aria-invalid={!!s?.fieldErrors?.name} />
+            <Input id="name" name="name" defaultValue={s?.values?.name} autoComplete="name" required aria-invalid={!!s?.fieldErrors?.name} />
           </Field>
           <Field label="Email" htmlFor="email" error={s?.fieldErrors?.email}>
-            <Input id="email" name="email" type="email" autoComplete="email" required aria-invalid={!!s?.fieldErrors?.email} />
+            <Input id="email" name="email" defaultValue={s?.values?.email} type="email" autoComplete="email" required aria-invalid={!!s?.fieldErrors?.email} />
           </Field>
           <Field label="Phone / WhatsApp" htmlFor="phone">
-            <Input id="phone" name="phone" type="tel" autoComplete="tel" inputMode="tel" />
+            <Input id="phone" name="phone" defaultValue={s?.values?.phone} type="tel" autoComplete="tel" inputMode="tel" />
           </Field>
           <Field label="Business name" htmlFor="company">
-            <Input id="company" name="company" autoComplete="organization" />
+            <Input id="company" name="company" defaultValue={s?.values?.company} autoComplete="organization" />
           </Field>
           <Field label="City" htmlFor="city">
-            <Input id="city" name="city" autoComplete="address-level2" />
+            <Input id="city" name="city" defaultValue={s?.values?.city} autoComplete="address-level2" />
           </Field>
           <Field label="Trade" htmlFor="industry">
             <Select id="industry" name="industry" defaultValue="">
@@ -35,7 +35,7 @@ export function ContactForm() {
             </Select>
           </Field>
           <Field label="What would you like to see?" htmlFor="message" className="sm:col-span-2">
-            <Textarea id="message" name="message" rows={4} placeholder="E.g. we have about 3,000 items in Tally and want to cut slow stock." />
+            <Textarea id="message" name="message" defaultValue={s?.values?.message} rows={4} placeholder="E.g. we have about 3,000 items in Tally and want to cut slow stock." />
           </Field>
           <div className="sm:col-span-2">
             <SubmitButton pendingLabel="Sending…">Request a demo</SubmitButton>

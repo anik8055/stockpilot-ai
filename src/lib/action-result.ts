@@ -6,6 +6,8 @@ export type ActionResult = {
   message?: string;
   fieldErrors?: Record<string, string>;
   data?: Record<string, unknown>;
+  /** Submitted values echoed back on failure (client-side only). */
+  values?: Record<string, string>;
 };
 
 export function fieldErrorsFrom(err: z.ZodError): Record<string, string> {
