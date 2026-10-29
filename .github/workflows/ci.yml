@@ -1,0 +1,46 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGPASSWORD: postgres
+      DATABASE_URL: postgres://stockpilot_app:stockpilot_app@localhost:5432/stockpilot_test
+      DATABASE_ADMIN_URL: postgres://stockpilot:stockpilot@localhost:5432/stockpilot_test
+      APP_URL: http://localhost:3100
+      AI_PROVIDER: none
+      STORAGE_DRIVER: local
+      STORAGE_DIR: ./.data/storage
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Create database roles
+        run: |
+          psql -h localhost -U postgres -c "CREATE ROLE stockpilot LOGIN CREATEDB PASSWORD 'stockpilot';"
+          psql -h localhost -U postgres -c "CREATE ROLE stockpilot_app LOGIN NOBYPASSRLS PASSWORD 'stockpilot_app';"
+          psql -h localhost -U postgres -c "CREATE DATABASE stockpilot_test OWNER stockpilot;"
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run db:migrate
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --project=desktop --project=mobile
+        env:
+          E2E_SERVER_COMMAND: RATE_LIMIT_RELAXED=1 npx next start -p 3100

@@ -11,7 +11,7 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
   const t = await requireTenant();
   const workspaces = await listWorkspaces(t.userId);
   const trialEnds = t.business.planCode === "trial" && t.business.trialEndsAt ? new Date(t.business.trialEndsAt) : null;
-  const trialDaysLeft = trialEnds ? Math.ceil((trialEnds.getTime() - Date.now()) / 86400000) : null;
+  const trialDaysLeft = trialEnds ? daysUntil(trialEnds) : null;
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -67,4 +67,8 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:py-8">{children}</div>
     </MobileShell>
   );
+}
+
+function daysUntil(d: Date) {
+  return Math.ceil((d.getTime() - new Date().getTime()) / 86400000);
 }

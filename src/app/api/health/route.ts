@@ -7,7 +7,10 @@ export const dynamic = "force-dynamic";
 /** Liveness + dependency check. Reports configuration state only — never secrets. */
 export async function GET(req: Request) {
   const db = await dbHealth();
-  const deep = new URL(req.url).searchParams.get("deep") === "1";
+  // The deep check calls the AI provider; allow it only with the configured token (or outside production).
+  const token = process.env.HEALTH_CHECK_TOKEN;
+  const wantsDeep = new URL(req.url).searchParams.get("deep") === "1";
+  const deep = wantsDeep && (process.env.NODE_ENV !== "production" || (!!token && req.headers.get("x-health-token") === token));
   const ai = await aiStatus(deep);
   const body = {
     status: db.ok ? "ok" : "degraded",

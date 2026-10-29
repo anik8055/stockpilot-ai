@@ -33,8 +33,13 @@ function allowedNumbers(r: ToolResult): Set<string> {
   const add = (n: number) => {
     if (!Number.isFinite(n)) return;
     for (const v of [n, Math.round(n), Math.round(n * 10) / 10, Math.round(n * 100) / 100, Math.abs(n), Math.round(Math.abs(n))]) out.add(String(v));
-    if (Math.abs(n) >= 1e5) out.add(String(Math.round((n / 1e5) * 100) / 100)), out.add(String(Math.round((n / 1e5) * 10) / 10)); // lakh
-    if (Math.abs(n) >= 1e7) out.add(String(Math.round((n / 1e7) * 100) / 100)), out.add(String(Math.round((n / 1e7) * 10) / 10)); // crore
+    for (const [unit, min] of [[1e5, 1e5], [1e7, 1e7]] as const) {
+      // lakh / crore forms ("₹3.8 L", "₹1.2 Cr")
+      if (Math.abs(n) >= min) {
+        out.add(String(Math.round((n / unit) * 100) / 100));
+        out.add(String(Math.round((n / unit) * 10) / 10));
+      }
+    }
     if (Math.abs(n) >= 1e3) out.add(String(Math.round(n / 1e3))); // "12k"
   };
   const visit = (v: unknown) => {

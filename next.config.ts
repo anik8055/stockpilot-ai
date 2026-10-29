@@ -11,6 +11,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Cache Components is intentionally off: nearly every page is per-tenant and per-request.
   poweredByHeader: false,
+  // Docker/self-hosting builds a minimal standalone server (NEXT_OUTPUT=standalone); Vercel ignores this.
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   turbopack: {
     rules: {
       "*.css": { loaders: ["@tailwindcss/turbopack"], as: "*.css" },

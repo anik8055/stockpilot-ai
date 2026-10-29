@@ -7,7 +7,6 @@ types.setTypeParser(20, (v) => Number(v)); // int8
 types.setTypeParser(1082, (v) => v); // date → 'YYYY-MM-DD' string, no timezone shifting
 
 declare global {
-  // eslint-disable-next-line no-var
   var __stockpilotPools: { app?: Pool; admin?: Pool } | undefined;
 }
 

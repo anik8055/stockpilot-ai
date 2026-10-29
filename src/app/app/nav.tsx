@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 const SECTIONS: { label: string; items: { href: string; label: string }[] }[] = [
   { label: "Overview", items: [{ href: "/app/dashboard", label: "Dashboard" }, { href: "/app/analytics", label: "Stock analysis" }, { href: "/app/reports", label: "Reports" }] },
@@ -52,9 +52,11 @@ export function AppNav() {
 }
 
 export function MobileShell({ sidebar, businessName, children }: { sidebar: ReactNode; businessName: string; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
+  // The menu is "open for" the path it was opened on, so navigating closes it without an effect.
   const path = usePathname();
-  useEffect(() => setOpen(false), [path]);
+  const [openFor, setOpenFor] = useState<string | null>(null);
+  const open = openFor === path;
+  const setOpen = (v: boolean) => setOpenFor(v ? path : null);
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[15.5rem_1fr]">
       <aside className="sticky top-0 hidden h-screen bg-ink lg:block">{sidebar}</aside>

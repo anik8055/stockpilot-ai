@@ -94,6 +94,7 @@ export async function joinBusinessAction(_: ActionResult | null, fd: FormData): 
   });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- signature required by useActionState
 export async function createDemoAction(_prev?: ActionResult | null, _fd?: FormData): Promise<ActionResult> {
   return runAction("onboarding.demo", async () => {
     const session = await requireSessionForOnboarding();
