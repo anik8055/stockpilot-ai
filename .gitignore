@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# StockPilot
+.data/
+/playwright-report/
+/test-results/
+*.keystore
+*.jks
+android/app/release/
