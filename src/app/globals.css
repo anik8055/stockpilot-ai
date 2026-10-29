@@ -1,26 +1,88 @@
 @import "tailwindcss";
+@import "@fontsource-variable/public-sans";
+
+/* StockPilot tokens — ink navy, ledger-paper neutrals, one signal blue, explicit warning states. */
+@theme {
+  --font-sans: "Public Sans Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #10233f;
+  --color-ink-2: #1b3358;
+  --color-ink-3: #2a4570;
+  --color-paper: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-line: #dfe4ec;
+  --color-line-strong: #c7cfdb;
+  --color-muted: #5a6a80;
+  --color-faint: #8a97a9;
+  --color-text: #15202e;
+
+  --color-signal: #2563c9;
+  --color-signal-strong: #1d4fa3;
+  --color-signal-soft: #e8f0fc;
+
+  --color-ok: #1d7a4e;
+  --color-ok-soft: #e6f4ec;
+  --color-warn: #9a5b05;
+  --color-warn-soft: #fdf3e1;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdecea;
+  --color-info-soft: #eef2f7;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-paper);
+  color: var(--color-text);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1, "cv11" 1;
+  line-height: 1.5;
+}
+
+h1, h2, h3 {
+  color: var(--color-ink);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 2px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #e9edf3 0%, #f3f5f9 50%, #e9edf3 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Native <dialog> used for confirmations */
+dialog::backdrop {
+  background: rgb(16 35 63 / 0.45);
 }

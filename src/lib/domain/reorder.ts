@@ -221,7 +221,7 @@ function leadLabel(src: ReorderInput["leadTimeSource"]) {
   return { product: "product setting", supplier_product: "supplier item setting", supplier: "supplier default", business_default: "business default" }[src];
 }
 
-function fmt(n: number, dp = 3) {
+function fmt(n: number, dp = 2) {
   return new Intl.NumberFormat("en-IN", { maximumFractionDigits: dp }).format(n);
 }
 

@@ -195,39 +195,43 @@ function round(n: number, dp = 3): number {
 /**
  * Estimates which days a product was out of stock.
  *
- * StockPilot's ledger only changes on snapshots (stock counts / billing closing stock), goods receipts and
- * adjustments — imported sales do NOT post movements. Between two snapshots the estimated closing stock is
- *   ledger balance − units sold since the last snapshot,
- * and each snapshot resets the estimate to the counted quantity (the count already reflects earlier sales).
- * Days before the product's first movement are unknown and never counted as stockouts.
+ * Stock counts (snapshot imports, opening balances) give the closing stock on their dates. Between counts the
+ * estimated closing stock is carried forward as
+ *   previous estimate + ledger receipts/adjustments − units sold + units bought (imported purchase history),
+ * because imported sales and purchase history are not ledger movements.
+ * A day only counts as a stockout when the estimate is ≤ 0 AND nothing was sold that day — a recorded sale
+ * proves the item was in stock, which protects against missing receipt data.
+ * Days before the first count or movement are unknown and never counted as stockouts.
  */
 export function estimateStockoutDays(params: {
-  /** All ledger movements for the product (any order). `resets` = snapshot/opening counts. */
-  movements: { date: ISODate; quantity: number; resets: boolean }[];
+  /** Counted closing stock by date (snapshot lines, opening balances). */
+  counts: Map<ISODate, number>;
+  /** Non-count ledger movements (receipts, adjustments) — any order. */
+  movements: { date: ISODate; quantity: number }[];
   dailySales: Map<ISODate, number>;
+  /** Imported purchase-history quantities by date (optional). */
+  dailyPurchases?: Map<ISODate, number>;
   from: ISODate;
   to: ISODate;
 }): Set<ISODate> {
-  const { movements, dailySales, from, to } = params;
+  const { counts, movements, dailySales, from, to } = params;
+  const purchases = params.dailyPurchases ?? new Map<ISODate, number>();
   const out = new Set<ISODate>();
-  if (movements.length === 0) return out;
-  const byDate = new Map<ISODate, { qty: number; resets: boolean }>();
-  let first = movements[0].date;
+  const moves = new Map<ISODate, number>();
+  let first: ISODate | null = null;
   for (const m of movements) {
-    const cur = byDate.get(m.date) ?? { qty: 0, resets: false };
-    cur.qty += m.quantity;
-    cur.resets ||= m.resets;
-    byDate.set(m.date, cur);
-    if (m.date < first) first = m.date;
+    moves.set(m.date, (moves.get(m.date) ?? 0) + m.quantity);
+    if (!first || m.date < first) first = m.date;
   }
-  let balance = 0;
-  let soldSinceCount = 0;
+  for (const d of counts.keys()) if (!first || d < first) first = d;
+  if (!first) return out;
+  let est = 0;
   for (let d = first; d <= to; d = addDays(d, 1)) {
-    const mv = byDate.get(d);
-    if (mv) balance += mv.qty;
-    if (mv?.resets) soldSinceCount = 0; // a count is the closing stock of that day
-    else soldSinceCount += dailySales.get(d) ?? 0;
-    if (d >= from && balance - soldSinceCount <= 0) out.add(d);
+    const sold = dailySales.get(d) ?? 0;
+    const counted = counts.get(d);
+    if (counted !== undefined) est = counted; // a count is the closing stock of that day
+    else est += (moves.get(d) ?? 0) - sold + (purchases.get(d) ?? 0);
+    if (d >= from && est <= 0 && sold === 0) out.add(d);
   }
   return out;
 }

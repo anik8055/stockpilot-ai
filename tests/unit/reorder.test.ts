@@ -115,24 +115,43 @@ describe("demand estimation", () => {
 
 describe("stockout estimation from the ledger", () => {
   it("subtracts sales since the last count and resets at each count", () => {
-    const movements = [
-      { date: "2026-09-01", quantity: 10, resets: true },
-      { date: "2026-09-20", quantity: 5, resets: true }, // count: 15 total balance
-    ];
+    const counts = new Map<ISODate, number>([["2026-09-01", 10], ["2026-09-20", 15]]);
     const sales = new Map<ISODate, number>();
-    for (let d = "2026-09-02"; d <= "2026-09-30"; d = addDays(d, 1)) sales.set(d, 1);
-    const out = estimateStockoutDays({ movements, dailySales: sales, from: "2026-09-01", to: "2026-09-30" });
-    // after 2026-09-01: 10 - 1/day → reaches 0 on 09-11, stays ≤0 until the 09-20 count resets to 15
+    // sells 1/day until stock runs out on 09-11, nothing while empty, then 1/day after the 09-20 recount
+    for (let d = "2026-09-02"; d <= "2026-09-11"; d = addDays(d, 1)) sales.set(d, 1);
+    for (let d = "2026-09-21"; d <= "2026-09-30"; d = addDays(d, 1)) sales.set(d, 1);
+    const out = estimateStockoutDays({ counts, movements: [], dailySales: sales, from: "2026-09-01", to: "2026-09-30" });
     expect(out.has("2026-09-10")).toBe(false);
-    expect(out.has("2026-09-11")).toBe(true);
+    expect(out.has("2026-09-11")).toBe(false); // the last unit sold that day → it was in stock
+    expect(out.has("2026-09-12")).toBe(true);
     expect(out.has("2026-09-19")).toBe(true);
     expect(out.has("2026-09-20")).toBe(false);
     expect(out.has("2026-09-30")).toBe(false); // 15 - 10
   });
 
+  it("adds imported purchases and trusts recorded sales over the estimate", () => {
+    const counts = new Map<ISODate, number>([["2026-09-01", 2]]);
+    const sales = new Map<ISODate, number>([["2026-09-02", 2], ["2026-09-05", 1]]);
+    const purchases = new Map<ISODate, number>([["2026-09-04", 5]]);
+    const out = estimateStockoutDays({ counts, movements: [], dailySales: sales, dailyPurchases: purchases, from: "2026-09-01", to: "2026-09-06" });
+    expect([...out].sort()).toEqual(["2026-09-03"]); // empty after 09-02 until the 09-04 purchase
+  });
+
+  it("adds ledger receipts between counts", () => {
+    const out = estimateStockoutDays({
+      counts: new Map([["2026-09-01", 1]]),
+      movements: [{ date: "2026-09-03", quantity: 4 }],
+      dailySales: new Map([["2026-09-02", 1]]),
+      from: "2026-09-01",
+      to: "2026-09-04",
+    });
+    expect([...out]).toEqual([]); // 09-02 sold its last unit (in stock), 09-03 receipt
+  });
+
   it("never infers stockouts before the first movement", () => {
     const out = estimateStockoutDays({
-      movements: [{ date: "2026-09-15", quantity: 3, resets: true }],
+      counts: new Map(),
+      movements: [{ date: "2026-09-15", quantity: 3 }],
       dailySales: new Map(),
       from: "2026-09-01",
       to: "2026-09-30",

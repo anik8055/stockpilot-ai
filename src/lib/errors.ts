@@ -36,7 +36,7 @@ export class LimitError extends AppError {
 
 export function publicMessage(err: unknown): string {
   if (err instanceof AppError) return err.message;
-  if (err && typeof err === "object" && "retryAfterSeconds" in err) return (err as Error).message;
+  if (err && typeof err === "object" && "retryAfterSeconds" in err) return (err as unknown as Error).message;
   return "Something went wrong. Please try again — if it keeps happening, contact support.";
 }
 
