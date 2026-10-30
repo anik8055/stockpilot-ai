@@ -21,6 +21,7 @@ export async function GET(req: Request) {
   const db = await dbDiagnostics();
   const warnings: string[] = [];
   if (process.env.NODE_ENV === "production" && !/^https:\/\//.test(process.env.APP_URL ?? "")) warnings.push("APP_URL should be your https:// address in production (secure cookies, email links).");
+  if (process.env.VERCEL && (process.env.STORAGE_DRIVER ?? "local") === "local") warnings.push("File storage is set to local disk, which Vercel does not keep. Set STORAGE_DRIVER=s3 and the S3_* variables (e.g. a private Supabase Storage bucket) so imports and invoices can be uploaded.");
   if (db.app.ok && db.app.rlsEnforced === false) warnings.push("DATABASE_URL connects as a superuser/BYPASSRLS role — tenant isolation is not enforced. Use the stockpilot_app role.");
   const migrationsOk = db.admin.ok && db.admin.latestMigration === LATEST_MIGRATION;
   if (db.admin.ok && !migrationsOk) warnings.push(`Migrations are not up to date (database has ${db.admin.latestMigration ?? "none"}, app needs ${LATEST_MIGRATION}). Run npm run db:migrate with DATABASE_ADMIN_URL.`);
