@@ -39,7 +39,7 @@ device; **Not built** = deliberately left out.
 | AI cost controls: quotas, row caps, token caps, timeout, usage log | Done | |
 | Tests: unit, integration (real Postgres), e2e (Playwright) | Done | |
 | Docker image | Written | Image not built here (Docker Hub unreachable); the standalone bundle it runs passed the full e2e suite in production mode |
-| CI workflow | Written | Runs on GitHub once the repository receives the code |
+| CI workflow | Done | Passing on GitHub (lint, typecheck, unit + integration tests, migrations, build, Playwright) |
 | S3 storage driver | Done | Signatures match AWS's SDK; passed against a local S3 server with signature checks; not yet run on your bucket |
 | Android (Capacitor) | Written | Not built, not on a device, not published |
 
