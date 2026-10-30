@@ -46,7 +46,47 @@ class LocalStore implements ObjectStore {
   }
 }
 
-class S3Store implements ObjectStore {
+/** RFC 3986 encoding required by SigV4 (encodeURIComponent leaves !'()* unescaped). */
+const rfc3986 = (s: string) => encodeURIComponent(s).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+
+/**
+ * Builds the URL and SigV4-signed headers for a path-style S3 request. Exported for tests, which compare the signature
+ * with botocore's signer.
+ */
+export function signS3Request(opts: {
+  endpoint: string; region: string; bucket: string; accessKey: string; secretKey: string;
+  method: string; key: string; query?: Record<string, string>; body?: Buffer; contentType?: string; now?: Date;
+}) {
+  const { endpoint, region, bucket, accessKey, secretKey, method, key, body, contentType } = opts;
+  const keyPath = key ? key.split("/").map(rfc3986).join("/") : "";
+  const url = new URL(`${endpoint.replace(/\/$/, "")}/${bucket}/${keyPath}`);
+  for (const [k, v] of Object.entries(opts.query ?? {})) url.searchParams.set(k, v);
+  {
+    const payloadHash = createHash("sha256").update(body ?? Buffer.alloc(0)).digest("hex");
+    const now = opts.now ?? new Date();
+    const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "");
+    const date = amzDate.slice(0, 8);
+    const headers: Record<string, string> = { host: url.host, "x-amz-content-sha256": payloadHash, "x-amz-date": amzDate };
+    if (contentType) headers["content-type"] = contentType;
+    const signedHeaders = Object.keys(headers).sort().join(";");
+    const canonicalQuery = [...url.searchParams.entries()]
+      .map(([k, v]) => `${rfc3986(k)}=${rfc3986(v)}`)
+      .sort()
+      .join("&");
+    const canonical = [method, url.pathname, canonicalQuery, Object.keys(headers).sort().map((h) => `${h}:${headers[h]}\n`).join(""), signedHeaders, payloadHash].join("\n");
+    const scope = `${date}/${region}/s3/aws4_request`;
+    const toSign = ["AWS4-HMAC-SHA256", amzDate, scope, createHash("sha256").update(canonical).digest("hex")].join("\n");
+    const kDate = createHmac("sha256", `AWS4${secretKey}`).update(date).digest();
+    const kRegion = createHmac("sha256", kDate).update(region).digest();
+    const kService = createHmac("sha256", kRegion).update("s3").digest();
+    const kSigning = createHmac("sha256", kService).update("aws4_request").digest();
+    const signature = createHmac("sha256", kSigning).update(toSign).digest("hex");
+    headers.authorization = `AWS4-HMAC-SHA256 Credential=${accessKey}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+    return { url, headers, signature };
+  }
+}
+
+export class S3Store implements ObjectStore {
   constructor(
     private endpoint: string,
     private region: string,
@@ -55,28 +95,11 @@ class S3Store implements ObjectStore {
     private secretKey: string,
   ) {}
 
-  private async request(method: string, key: string, body?: Buffer, contentType?: string, query = "") {
-    const url = new URL(`${this.endpoint.replace(/\/$/, "")}/${this.bucket}/${key.split("/").map(encodeURIComponent).join("/")}${query}`);
-    const payloadHash = createHash("sha256").update(body ?? Buffer.alloc(0)).digest("hex");
-    const now = new Date();
-    const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "");
-    const date = amzDate.slice(0, 8);
-    const headers: Record<string, string> = { host: url.host, "x-amz-content-sha256": payloadHash, "x-amz-date": amzDate };
-    if (contentType) headers["content-type"] = contentType;
-    const signedHeaders = Object.keys(headers).sort().join(";");
-    const canonicalQuery = [...url.searchParams.entries()]
-      .sort(([a], [b]) => (a < b ? -1 : 1))
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-      .join("&");
-    const canonical = [method, url.pathname, canonicalQuery, Object.keys(headers).sort().map((h) => `${h}:${headers[h]}\n`).join(""), signedHeaders, payloadHash].join("\n");
-    const scope = `${date}/${this.region}/s3/aws4_request`;
-    const toSign = ["AWS4-HMAC-SHA256", amzDate, scope, createHash("sha256").update(canonical).digest("hex")].join("\n");
-    const kDate = createHmac("sha256", `AWS4${this.secretKey}`).update(date).digest();
-    const kRegion = createHmac("sha256", kDate).update(this.region).digest();
-    const kService = createHmac("sha256", kRegion).update("s3").digest();
-    const kSigning = createHmac("sha256", kService).update("aws4_request").digest();
-    const signature = createHmac("sha256", kSigning).update(toSign).digest("hex");
-    headers.authorization = `AWS4-HMAC-SHA256 Credential=${this.accessKey}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+  private async request(method: string, key: string, body?: Buffer, contentType?: string, query?: Record<string, string>) {
+    const { url, headers } = signS3Request({
+      endpoint: this.endpoint, region: this.region, bucket: this.bucket, accessKey: this.accessKey, secretKey: this.secretKey,
+      method, key, query, body, contentType,
+    });
     const res = await fetch(url, { method, headers, body: body ? new Uint8Array(body) : undefined, signal: AbortSignal.timeout(30_000) });
     if (!res.ok && !(method === "DELETE" && res.status === 404)) throw new Error(`Storage ${method} failed with HTTP ${res.status}`);
     return res;
@@ -91,10 +114,23 @@ class S3Store implements ObjectStore {
     await this.request("DELETE", key);
   }
   async removePrefix(prefix: string) {
-    const res = await this.request("GET", "", undefined, undefined, `?list-type=2&prefix=${encodeURIComponent(prefix)}`);
-    const xml = await res.text();
-    for (const m of xml.matchAll(/<Key>([^<]+)<\/Key>/g)) await this.remove(m[1]);
+    // List-then-delete, following continuation tokens (S3 returns at most 1,000 keys per page).
+    let token: string | undefined;
+    do {
+      const query: Record<string, string> = { "list-type": "2", prefix };
+      if (token) query["continuation-token"] = token;
+      const xml = await (await this.request("GET", "", undefined, undefined, query)).text();
+      const keys = [...xml.matchAll(/<Key>([^<]+)<\/Key>/g)].map((m) => unescapeXml(m[1]));
+      for (const key of keys) await this.remove(key);
+      token = /<IsTruncated>true<\/IsTruncated>/.test(xml)
+        ? unescapeXml(xml.match(/<NextContinuationToken>([^<]+)<\/NextContinuationToken>/)?.[1] ?? "") || undefined
+        : undefined;
+    } while (token);
   }
+}
+
+function unescapeXml(s: string) {
+  return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
 }
 
 let store: ObjectStore | undefined;
