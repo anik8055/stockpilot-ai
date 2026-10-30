@@ -42,5 +42,9 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test --project=desktop --project=mobile
-        env:
-          E2E_SERVER_COMMAND: RATE_LIMIT_RELAXED=1 npx next start -p 3100
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-results
+          path: test-results/
+          retention-days: 7
