@@ -1,0 +1,46 @@
+Sample Electricals & Hardware (fictional) — Stock Item Master
+
+Item Code,Item Name,Stock Group,Brand,UOM,Purchase Rate,MRP,Reorder Level,Max Level,Lead Time Days,Vendor,Vendor Item Code,Rack
+WR-FR-1.5-RD,FR PVC Wire 1.5 sqmm Red (90 m coil),Wires & Cables,Shaktiwire,coil,1180,1450,20,80,,Jaipur Cable House,JCH-FR15R,A1
+WR-FR-1.5-BK,FR PVC Wire 1.5 sqmm Black (90 m coil),Wires & Cables,Shaktiwire,coil,1180,1450,20,80,,Jaipur Cable House,JCH-FR15B,A1
+WR-FR-2.5-RD,FR PVC Wire 2.5 sqmm Red (90 m coil),Wires & Cables,Shaktiwire,coil,1890,2290,15,60,,Jaipur Cable House,JCH-FR25R,A2
+WR-FR-4.0-BK,FR PVC Wire 4 sqmm Black (90 m coil),Wires & Cables,Shaktiwire,coil,3020,3590,6,25,,Jaipur Cable House,JCH-FR40B,A2
+WR-FLEX-0.75,Flexible Cable 0.75 sqmm 3-core (per m),Wires & Cables,Shaktiwire,m,38,52,300,1500,,Jaipur Cable House,JCH-FX075,A3
+WR-CAT6-305,CAT6 LAN Cable (305 m box),Wires & Cables,NetLink,box,6400,7800,2,8,9,Jaipur Cable House,JCH-CAT6,A4
+SW-6A-1W,Modular Switch 6A 1-Way,Switches & Sockets,Brightline,pcs,38,59,200,900,,Delhi Switchgear Traders,DST-S61W,B1
+SW-16A-1W,Modular Switch 16A 1-Way,Switches & Sockets,Brightline,pcs,74,109,80,400,,Delhi Switchgear Traders,DST-S161W,B1
+SK-6A-3P,Modular Socket 6A 3-Pin,Switches & Sockets,Brightline,pcs,62,95,120,500,,Delhi Switchgear Traders,DST-K63P,B2
+SK-16A-6P,Modular Socket 16A 6-Pin,Switches & Sockets,Brightline,pcs,118,175,50,250,,Delhi Switchgear Traders,DST-K166P,B2
+PL-8M-WH,Modular Cover Plate 8-Module White,Switches & Sockets,Brightline,pcs,96,149,60,300,,Delhi Switchgear Traders,DST-P8MW,B3
+PL-OLD-IVORY,Cover Plate 6-Module Ivory (old series),Switches & Sockets,Brightline,pcs,71,99,0,,,Delhi Switchgear Traders,DST-P6IV,B9
+MCB-SP-16,MCB Single Pole 16A C-curve,MCBs & DBs,Voltex,pcs,148,215,60,300,,Delhi Switchgear Traders,DST-M1P16,C1
+MCB-SP-32,MCB Single Pole 32A C-curve,MCBs & DBs,Voltex,pcs,152,225,40,200,,Delhi Switchgear Traders,DST-M1P32,C1
+MCB-DP-40,MCB Double Pole 40A,MCBs & DBs,Voltex,pcs,520,740,15,80,,Delhi Switchgear Traders,DST-M2P40,C2
+RCCB-40-30,RCCB 40A 30mA 2-Pole,MCBs & DBs,Voltex,pcs,1650,2290,6,30,,Delhi Switchgear Traders,DST-R4030,C2
+DB-8W-DD,Distribution Board 8-Way Double Door,MCBs & DBs,Voltex,pcs,1320,1790,5,25,,Delhi Switchgear Traders,DST-DB8,C3
+DB-4W-SD-OLD,Distribution Board 4-Way Single Door (discontinued),MCBs & DBs,Voltex,pcs,610,820,0,,,Delhi Switchgear Traders,DST-DB4O,C9
+LED-9W-CW,LED Bulb 9W Cool White B22,Lighting,Lumora,pcs,52,85,300,1500,,Mumbai Lighting Co.,MLC-B9CW,D1
+LED-12W-CW,LED Bulb 12W Cool White B22,Lighting,Lumora,pcs,71,115,150,800,,Mumbai Lighting Co.,MLC-B12CW,D1
+LED-TUBE-20W,LED Batten 20W 4 ft,Lighting,Lumora,pcs,186,279,80,400,,Mumbai Lighting Co.,MLC-T20,D2
+LED-PANEL-15,LED Round Panel 15W Recessed,Lighting,Lumora,pcs,240,365,40,200,,Mumbai Lighting Co.,MLC-RP15,D2
+LED-FLOOD-50,LED Flood Light 50W,Lighting,Lumora,pcs,690,990,10,50,,Mumbai Lighting Co.,MLC-FL50,D3
+LED-STRIP-5M,LED Strip 5 m Warm White with driver,Lighting,Lumora,pcs,410,620,20,100,,Mumbai Lighting Co.,MLC-ST5,D3
+CFL-18W,CFL 18W Spiral (old stock),Lighting,Lumora,pcs,88,120,0,,,Mumbai Lighting Co.,MLC-CFL18,D9
+FAN-CEIL-1200,Ceiling Fan 1200 mm Brown,Fans,Aerobreeze,pcs,1480,1990,15,60,14,Coimbatore Fan Works,CFW-C1200B,E1
+FAN-CEIL-BLDC,BLDC Ceiling Fan 1200 mm Energy Saver,Fans,Aerobreeze,pcs,2650,3490,6,30,14,Coimbatore Fan Works,CFW-BLDC,E1
+FAN-EXH-150,Exhaust Fan 150 mm,Fans,Aerobreeze,pcs,640,890,10,50,,Coimbatore Fan Works,CFW-EX150,E2
+FAN-WALL-400,Wall Fan 400 mm,Fans,Aerobreeze,pcs,1390,1850,8,40,,Coimbatore Fan Works,CFW-W400,E2
+PIPE-PVC-20,PVC Conduit Pipe 20 mm (3 m length),Pipes & Conduits,Duraflow,pcs,34,52,400,2000,,Ahmedabad Pipes & Fittings,APF-C20,F1
+PIPE-PVC-25,PVC Conduit Pipe 25 mm (3 m length),Pipes & Conduits,Duraflow,pcs,46,69,200,1000,,Ahmedabad Pipes & Fittings,APF-C25,F1
+BEND-20,PVC Bend 20 mm,Pipes & Conduits,Duraflow,pcs,4.5,8,500,3000,,Ahmedabad Pipes & Fittings,APF-B20,F2
+JBOX-RND-20,Round Junction Box 20 mm 2-Way,Pipes & Conduits,Duraflow,pcs,9,16,300,1500,,Ahmedabad Pipes & Fittings,APF-J20,F2
+TAPE-INS-BK,Insulation Tape Black (pack of 10),Accessories,Grip,pack,72,110,60,300,,Ludhiana Tools & Fasteners,LTF-TAPE10,G1
+TIE-200-100,Cable Ties 200 mm (pack of 100),Accessories,Grip,pack,48,80,50,250,,Ludhiana Tools & Fasteners,LTF-CT200,G1
+SCRW-8X25,Wood Screw 8 x 25 mm (box of 100),Fasteners,Ironclad,box,64,99,40,200,,Ludhiana Tools & Fasteners,LTF-WS825,G2
+ANCHOR-6,Wall Plug Anchor 6 mm (pack of 100),Fasteners,Ironclad,pack,36,60,50,250,,Ludhiana Tools & Fasteners,LTF-A6,G2
+TOOL-TESTER,Line Tester Screwdriver,Tools,Ironclad,pcs,28,49,50,300,,Ludhiana Tools & Fasteners,LTF-TST,G3
+TOOL-PLIER-8,Combination Plier 8 inch,Tools,Ironclad,pcs,210,320,15,80,,Ludhiana Tools & Fasteners,LTF-PL8,G3
+TOOL-DRILL-13,Impact Drill 13 mm 650W,Tools,Ironclad,pcs,2350,3150,3,15,15,Ludhiana Tools & Fasteners,LTF-DR13,G4
+TOOL-CRIMP,Crimping Tool for Lugs,Tools,Ironclad,pcs,540,760,5,25,,Ludhiana Tools & Fasteners,LTF-CRMP,G4
+EARTH-ROD-2M,Copper Bonded Earthing Rod 2 m,Earthing,Duraflow,pcs,1180,1590,5,25,,Ahmedabad Pipes & Fittings,APF-ER2,H1
+WR-FR-6.0-RD,FR PVC Wire 6 sqmm Red (90 m coil),Wires & Cables,Shaktiwire,coil,4480,5290,3,15,,Jaipur Cable House,JCH-FR60R,A2

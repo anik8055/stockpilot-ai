@@ -1,0 +1,44 @@
+Item Code,Item Name,Closing Qty,UOM,Rate
+WR-FR-1.5-RD,FR PVC Wire 1.5 sqmm Red (90 m coil),9,coil,1180
+WR-FR-1.5-BK,FR PVC Wire 1.5 sqmm Black (90 m coil),31,coil,1180
+WR-FR-2.5-RD,FR PVC Wire 2.5 sqmm Red (90 m coil),6,coil,1890
+WR-FR-4.0-BK,FR PVC Wire 4 sqmm Black (90 m coil),14,coil,3020
+WR-FLEX-0.75,Flexible Cable 0.75 sqmm 3-core (per m),640,m,38
+WR-CAT6-305,CAT6 LAN Cable (305 m box),7,box,6400
+SW-6A-1W,Modular Switch 6A 1-Way,410,pcs,38
+SW-16A-1W,Modular Switch 16A 1-Way,37,pcs,74
+SK-6A-3P,Modular Socket 6A 3-Pin,0,pcs,62
+SK-16A-6P,Modular Socket 16A 6-Pin,88,pcs,118
+PL-8M-WH,Modular Cover Plate 8-Module White,132,pcs,96
+PL-OLD-IVORY,Cover Plate 6-Module Ivory (old series),240,pcs,71
+MCB-SP-16,MCB Single Pole 16A C-curve,18,pcs,148
+MCB-SP-32,MCB Single Pole 32A C-curve,95,pcs,152
+MCB-DP-40,MCB Double Pole 40A,22,pcs,520
+RCCB-40-30,RCCB 40A 30mA 2-Pole,4,pcs,1650
+DB-8W-DD,Distribution Board 8-Way Double Door,26,pcs,1320
+DB-4W-SD-OLD,Distribution Board 4-Way Single Door (discontinued),58,pcs,610
+LED-9W-CW,LED Bulb 9W Cool White B22,520,pcs,52
+LED-12W-CW,LED Bulb 12W Cool White B22,46,pcs,71
+LED-TUBE-20W,LED Batten 20W 4 ft,61,pcs,186
+LED-PANEL-15,LED Round Panel 15W Recessed,190,pcs,240
+LED-FLOOD-50,LED Flood Light 50W,12,pcs,690
+LED-STRIP-5M,LED Strip 5 m Warm White with driver,40,pcs,410
+CFL-18W,CFL 18W Spiral (old stock),310,pcs,88
+FAN-CEIL-1200,Ceiling Fan 1200 mm Brown,47,pcs,1480
+FAN-CEIL-BLDC,BLDC Ceiling Fan 1200 mm Energy Saver,3,pcs,2650
+FAN-EXH-150,Exhaust Fan 150 mm,16,pcs,640
+FAN-WALL-400,Wall Fan 400 mm,64,pcs,1390
+PIPE-PVC-20,PVC Conduit Pipe 20 mm (3 m length),0,pcs,34
+PIPE-PVC-25,PVC Conduit Pipe 25 mm (3 m length),260,pcs,46
+BEND-20,PVC Bend 20 mm,1900,pcs,4.5
+JBOX-RND-20,Round Junction Box 20 mm 2-Way,3400,pcs,9
+TAPE-INS-BK,Insulation Tape Black (pack of 10),75,pack,72
+TIE-200-100,Cable Ties 200 mm (pack of 100),210,pack,48
+SCRW-8X25,Wood Screw 8 x 25 mm (box of 100),44,box,64
+ANCHOR-6,Wall Plug Anchor 6 mm (pack of 100),118,pack,36
+TOOL-TESTER,Line Tester Screwdriver,260,pcs,28
+TOOL-PLIER-8,Combination Plier 8 inch,21,pcs,210
+TOOL-DRILL-13,Impact Drill 13 mm 650W,19,pcs,2350
+TOOL-CRIMP,Crimping Tool for Lugs,33,pcs,540
+EARTH-ROD-2M,Copper Bonded Earthing Rod 2 m,11,pcs,1180
+WR-FR-6.0-RD,FR PVC Wire 6 sqmm Red (90 m coil),0,coil,4480
