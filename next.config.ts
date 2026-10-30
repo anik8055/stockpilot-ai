@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@node-rs/argon2", "pdfkit", "exceljs", "unpdf", "pg"],
   // PDF fonts are read from disk at runtime; make sure they are traced into serverless bundles.
   outputFileTracingIncludes: { "/**": ["./assets/fonts/**"] },
+  // Dynamic file paths (storage, migrations) make the tracer pull in the whole repo; keep the server bundle lean.
+  outputFileTracingExcludes: { "/**": ["./android/**", "./tests/**", "./mobile/**", "./docs/**", "./src/**/*.tsx", "./.data/**"] },
   experimental: {
     serverActions: { bodySizeLimit: "12mb" },
   },
