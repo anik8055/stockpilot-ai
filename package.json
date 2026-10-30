@@ -16,7 +16,8 @@
     "test:e2e": "playwright test",
     "android:assets": "node scripts/android-assets.mjs",
     "android:sync": "cap sync android",
-    "android:open": "cap open android"
+    "android:open": "cap open android",
+    "vercel-build": "node scripts/vercel-build.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",

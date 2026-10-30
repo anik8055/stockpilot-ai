@@ -22,7 +22,9 @@ Supabase pricing (supabase.com/pricing). Prices are in USD and exclude GST.
    CREATE ROLE stockpilot_app LOGIN PASSWORD '<strong password>' NOBYPASSRLS;
    ```
    Migrations use the `postgres` (owner) connection. `stockpilot_app` gets its grants from migration `0001`.
-3. **Migrate** from your machine using the *direct* connection string:
+3. **Migrate.** Production deploys on Vercel do this automatically (`npm run vercel-build` applies pending migrations
+   when `VERCEL_ENV=production` and `DATABASE_ADMIN_URL` is set; preview deploys never touch the database; a failed
+   migration fails the deploy). To run it yourself instead, use the owner connection string:
    ```bash
    DATABASE_ADMIN_URL="postgresql://postgres:<pw>@db.<ref>.supabase.co:5432/postgres?sslmode=require" npm run db:migrate
    ```
