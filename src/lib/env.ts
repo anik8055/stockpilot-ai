@@ -7,6 +7,9 @@ const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_URL: z.string().min(1, "DATABASE_URL (app role, no BYPASSRLS) is required"),
   DATABASE_ADMIN_URL: z.string().min(1, "DATABASE_ADMIN_URL (owner role) is required"),
+  /** PEM CA certificate of the database server (e.g. Supabase's), for verified TLS. */
+  DATABASE_CA_CERT: optional,
+  DATABASE_STATEMENT_TIMEOUT_MS: z.coerce.number().int().min(0).max(600000).default(30000),
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(5),
   APP_URL: z.string().url().default("http://localhost:3000"),
   SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(30),
@@ -55,6 +58,12 @@ const schema = z.object({
 export type Env = z.infer<typeof schema>;
 
 let cached: Env | undefined;
+
+/** Names (never values) of missing or invalid variables, for the health endpoint. */
+export function envProblems(): string[] {
+  const parsed = schema.safeParse(process.env);
+  return parsed.success ? [] : [...new Set(parsed.error.issues.map((i) => i.path.join(".")))];
+}
 
 export function env(): Env {
   if (cached) return cached;

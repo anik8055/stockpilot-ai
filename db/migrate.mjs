@@ -5,12 +5,13 @@ import { readdirSync, readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { pgConnectionConfig } from "./pg-config.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 /** @param {string} url @param {(s: string) => void} [log] */
 export async function runMigrations(url, log = () => undefined) {
-  const client = new pg.Client({ connectionString: url });
+  const client = new pg.Client(pgConnectionConfig(url));
   await client.connect();
   try {
     await client.query(`CREATE TABLE IF NOT EXISTS schema_migrations (

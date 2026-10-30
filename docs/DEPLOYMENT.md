@@ -31,7 +31,12 @@ Supabase pricing (supabase.com/pricing). Prices are in USD and exclude GST.
    - `DATABASE_URL` = pooler (transaction mode) URL with user `stockpilot_app.<ref>` and `?sslmode=require`
    - `DATABASE_ADMIN_URL` = pooler URL with the `postgres` user (used for sign-in and sessions)
    - `DATABASE_POOL_MAX=3`, `APP_URL=https://<your domain>`, storage, AI and email variables from `.env.example`
-6. **Deploy**, then open `https://<domain>/api/health` — it should return `{"status":"ok"}`.
+   - `DATABASE_CA_CERT` = the contents of Supabase's CA certificate (Project settings → Database → SSL configuration →
+     Download certificate; paste the whole PEM). Needed because the Postgres driver fully verifies TLS certificates.
+   - If the pooler rejects a session setting, set `DATABASE_STATEMENT_TIMEOUT_MS=0`.
+6. **Deploy**, then open `https://<domain>/api/health`. It returns `"status":"ok"` when everything is right; otherwise
+   every failing part has a `problem` code and a `hint` (missing variables by name, wrong password, untrusted
+   certificate, pooler username, migrations not applied…). It never shows secret values.
 7. **Custom domain** — add it in Vercel → Domains and point DNS as instructed; update `APP_URL`.
 
 ## B. Docker (single server)
