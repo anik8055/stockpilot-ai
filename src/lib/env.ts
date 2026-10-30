@@ -36,6 +36,17 @@ const schema = z.object({
   RESEND_API_KEY: optional,
   EMAIL_FROM: optional,
 
+  // Online billing (Razorpay subscriptions). Billing is enabled only when all four are set.
+  RAZORPAY_KEY_ID: optional,
+  RAZORPAY_KEY_SECRET: optional,
+  RAZORPAY_WEBHOOK_SECRET: optional,
+  /** Razorpay plan IDs per StockPilot plan, e.g. "starter:plan_ABC,growth:plan_DEF" (create the plans in the Razorpay dashboard). */
+  RAZORPAY_PLAN_IDS: optional,
+  RAZORPAY_API_BASE: z.string().url().default("https://api.razorpay.com/v1"),
+
+  // Scheduled weekly report emails: the scheduler calls /api/cron/weekly-reports with this bearer token.
+  CRON_SECRET: optional,
+
   MAX_IMPORT_FILE_MB: z.coerce.number().min(1).max(50).default(10),
   MAX_INVOICE_FILE_MB: z.coerce.number().min(1).max(25).default(8),
   TRIAL_DAYS: z.coerce.number().int().min(0).max(60).default(14),

@@ -144,12 +144,18 @@ export async function buildWeeklyReport(db: Tx, businessId: string, settings: An
   };
 }
 
-export async function saveReport(db: Tx, ctx: { userId: string; businessId: string }, data: WeeklyReport) {
-  const r = await db.one<{ id: string }>(
-    "INSERT INTO reports (business_id, kind, period_start, period_end, data, generated_by) VALUES ($1,'weekly',$2,$3,$4,$5) RETURNING id",
-    [ctx.businessId, data.period.start, data.period.end, JSON.stringify(data), ctx.userId],
+export async function saveReport(db: Tx, ctx: { userId: string; businessId: string }, data: WeeklyReport): Promise<string>;
+export async function saveReport(db: Tx, ctx: { userId: string; businessId: string }, data: WeeklyReport, opts: { scheduled: true }): Promise<string | null>;
+/** Saves a report. Scheduled reports are unique per workspace and week; a duplicate returns null. */
+export async function saveReport(db: Tx, ctx: { userId: string; businessId: string }, data: WeeklyReport, opts?: { scheduled: true }): Promise<string | null> {
+  const scheduled = !!opts?.scheduled;
+  const r = await db.maybeOne<{ id: string }>(
+    `INSERT INTO reports (business_id, kind, period_start, period_end, data, generated_by, scheduled) VALUES ($1,'weekly',$2,$3,$4,$5,$6)
+     ${scheduled ? "ON CONFLICT (business_id, period_start) WHERE scheduled DO NOTHING" : ""} RETURNING id`,
+    [ctx.businessId, data.period.start, data.period.end, JSON.stringify(data), ctx.userId, scheduled],
   );
-  await db.query("INSERT INTO audit_events (business_id, actor_user_id, action, entity_type, entity_id) VALUES ($1,$2,'report.generated','report',$3)", [ctx.businessId, ctx.userId, r.id]);
+  if (!r) return null;
+  await db.query("INSERT INTO audit_events (business_id, actor_user_id, action, entity_type, entity_id, metadata) VALUES ($1,$2,'report.generated','report',$3,$4)", [ctx.businessId, ctx.userId, r.id, JSON.stringify({ scheduled })]);
   return r.id;
 }
 

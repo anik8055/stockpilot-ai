@@ -1,4 +1,5 @@
 import "server-only";
+import { cancelSubscriptionsForDeletion } from "@/lib/services/billing";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { withAdmin, withTenant, withUser } from "@/lib/db";
@@ -149,6 +150,7 @@ export async function removeMember(ctx: { userId: string; businessId: string; ro
 /** Permanently deletes a workspace and all of its data. Owner only; caller re-verifies the password. */
 export async function deleteBusiness(ctx: { userId: string; businessId: string; role: Role }) {
   if (ctx.role !== "owner") throw new ForbiddenError("Only an owner can delete the workspace.");
+  await cancelSubscriptionsForDeletion([ctx.businessId]);
   await withAdmin(async (tx) => {
     const ok = await tx.maybeOne("SELECT 1 FROM memberships WHERE business_id = $1 AND user_id = $2 AND role = 'owner'", [ctx.businessId, ctx.userId]);
     if (!ok) throw new ForbiddenError();

@@ -10,6 +10,7 @@ import { verifyPassword } from "@/lib/auth/password";
 import { withAdmin } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { changePassword, deleteAccount } from "@/lib/services/accounts";
+import { cancelSubscription, refreshSubscription, startSubscription } from "@/lib/services/billing";
 import { updateAnalysisSettings, updateProfile } from "@/lib/services/settings";
 import { deleteBusiness, regenerateJoinCode, removeMember, updateMemberRole } from "@/lib/services/workspaces";
 import { requireTenant, tx } from "@/lib/tenant";
@@ -93,5 +94,34 @@ export async function deleteAccountAction(_: ActionResult | null, fd: FormData):
     await deleteAccount(t.userId, String(fd.get("password") ?? ""));
     await destroySession().catch(() => undefined);
     redirect("/?account=deleted");
+  });
+}
+
+export async function subscribeAction(_: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  return runAction("settings.billing.subscribe", async () => {
+    const t = await requireTenant("billing.manage");
+    await rateLimit(`billing:${t.userId}`, 10, 3600);
+    const url = await startSubscription(t, String(fd.get("plan") ?? ""));
+    // Razorpay's hosted payment page; the plan changes only after Razorpay confirms the payment.
+    redirect(url);
+  });
+}
+
+export async function cancelSubscriptionAction(): Promise<ActionResult> {
+  return runAction("settings.billing.cancel", async () => {
+    const t = await requireTenant("billing.manage");
+    await cancelSubscription(t);
+    revalidatePath("/app", "layout");
+    redirect("/app/settings?tab=plan&billing=cancelled");
+  });
+}
+
+export async function refreshBillingAction(): Promise<ActionResult> {
+  return runAction("settings.billing.refresh", async () => {
+    const t = await requireTenant("billing.manage");
+    await rateLimit(`billing-refresh:${t.userId}`, 30, 3600);
+    const status = await refreshSubscription(t);
+    revalidatePath("/app", "layout");
+    return { ok: true, message: status ? `Payment provider reports this subscription as “${status}”.` : "No subscription found." };
   });
 }

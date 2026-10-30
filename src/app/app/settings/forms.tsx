@@ -3,7 +3,7 @@
 import { ActionForm, ConfirmAction, SubmitButton } from "@/components/client";
 import { Field, Input, Select } from "@/components/ui";
 import type { AnalysisSettings } from "@/lib/domain/settings";
-import { analysisAction, changePasswordAction, deleteAccountAction, deleteWorkspaceAction, joinCodeAction, memberRoleAction, profileAction, removeMemberAction } from "./actions";
+import { analysisAction, cancelSubscriptionAction, changePasswordAction, deleteAccountAction, deleteWorkspaceAction, joinCodeAction, memberRoleAction, profileAction, refreshBillingAction, removeMemberAction, subscribeAction } from "./actions";
 
 export function ProfileForm({ v, disabled }: { v: Record<string, string | null>; disabled: boolean }) {
   return (
@@ -161,6 +161,35 @@ export function DeleteAccountForm() {
       <Field label="Type DELETE to confirm" htmlFor="da-confirm"><Input id="da-confirm" name="confirm" autoComplete="off" required /></Field>
       <Field label="Your password" htmlFor="da-pw"><Input id="da-pw" name="password" type="password" autoComplete="current-password" required /></Field>
       <div><SubmitButton variant="danger" pendingLabel="Deleting…">Delete my account</SubmitButton></div>
+    </ActionForm>
+  );
+}
+
+export function SubscribeButton({ plan, label }: { plan: string; label: string }) {
+  return (
+    <ActionForm action={subscribeAction} className="mt-3">
+      <input type="hidden" name="plan" value={plan} />
+      <SubmitButton size="sm" pendingLabel="Opening payment page…">{label}</SubmitButton>
+    </ActionForm>
+  );
+}
+
+export function CancelSubscription({ endsAt }: { endsAt: string | null }) {
+  return (
+    <ConfirmAction
+      action={cancelSubscriptionAction}
+      label="Cancel subscription"
+      title="Cancel the subscription?"
+      body={endsAt ? `You keep your current plan until ${endsAt}. After that the workspace switches to Starter features; no data is deleted.` : "The subscription has not been charged yet and will be cancelled now."}
+      confirmLabel="Cancel subscription"
+    />
+  );
+}
+
+export function RefreshBilling() {
+  return (
+    <ActionForm action={refreshBillingAction}>
+      <SubmitButton size="sm" variant="secondary" pendingLabel="Checking…">Check payment status</SubmitButton>
     </ActionForm>
   );
 }

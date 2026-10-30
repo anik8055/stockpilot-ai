@@ -11,7 +11,8 @@ import { monthlyUsage } from "@/lib/services/entitlements";
 import { getPublicPlans } from "@/lib/services/public";
 import { getProfile, listMembers, recentAudit } from "@/lib/services/settings";
 import { requireTenant, tx } from "@/lib/tenant";
-import { AnalysisForm, DeleteAccountForm, DeleteWorkspaceForm, JoinCode, MemberRole, PasswordForm, ProfileForm, RemoveMember } from "./forms";
+import { getBillingState } from "@/lib/services/billing";
+import { AnalysisForm, CancelSubscription, RefreshBilling, SubscribeButton, DeleteAccountForm, DeleteWorkspaceForm, JoinCode, MemberRole, PasswordForm, ProfileForm, RemoveMember } from "./forms";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -26,7 +27,7 @@ const TABS = [
 
 export default async function SettingsPage(props: PageProps<"/app/settings">) {
   const t = await requireTenant();
-  const { tab: raw } = await props.searchParams;
+  const { tab: raw, billing } = await props.searchParams;
   const tab = TABS.some(([k]) => k === raw) ? (raw as string) : "business";
   const manage = can(t.role, "settings.manage");
 
@@ -48,7 +49,7 @@ export default async function SettingsPage(props: PageProps<"/app/settings">) {
         </Panel>
       )}
       {tab === "team" && <TeamTab t={t} />}
-      {tab === "plan" && <PlanTab t={t} />}
+      {tab === "plan" && <PlanTab t={t} notice={typeof billing === "string" ? billing : undefined} />}
       {tab === "activity" && <ActivityTab t={t} />}
       {tab === "account" && <AccountTab t={t} />}
     </>
@@ -106,8 +107,11 @@ async function TeamTab({ t }: { t: T }) {
   );
 }
 
-async function PlanTab({ t }: { t: T }) {
+async function PlanTab({ t, notice }: { t: T; notice?: string }) {
   const ent = await loadEntitlements(t);
+  const billingState = await tx(t, (db) => getBillingState(db, t.businessId));
+  const isOwner = can(t.role, "billing.manage");
+  const current = billingState.current;
   const usage = await tx(t, (db) => monthlyUsage(db, t.businessId));
   const plans = await getPublicPlans();
   const ai = await aiStatus(false);
@@ -125,6 +129,8 @@ async function PlanTab({ t }: { t: T }) {
   ];
   return (
     <div className="space-y-6">
+      {notice === "cancelled" && <Alert tone="ok">Subscription cancelled. Your plan stays active until the end of the paid period.</Alert>}
+      {ent.status === "past_due" && <Alert tone="warn">The last renewal payment failed. Razorpay will retry; update your payment method from the link in Razorpay&apos;s email to avoid losing paid features.</Alert>}
       <Panel title={`Current plan: ${ent.plan.name}`} description={ent.trialEndsAt ? (ent.trialExpired ? "Trial ended — Starter features apply until a plan is activated." : `Trial ends ${formatDate(new Date(ent.trialEndsAt))}.`) : ent.plan.description}>
         <dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {rows.map(([label, used, limit]) => (
@@ -143,12 +149,34 @@ async function PlanTab({ t }: { t: T }) {
               <p className="font-semibold text-ink">{p.name}</p>
               <p className="num text-sm text-muted">{p.isCustomPrice || p.priceInrMonthly === null ? "Custom pricing" : `₹${p.priceInrMonthly.toLocaleString("en-IN")} / month (indicative, excl. GST)`}</p>
               <p className="mt-1 text-xs text-muted">{p.description}</p>
+              {isOwner && billingState.configured && billingState.subscribablePlans.includes(p.code) && (!current || current.status === "created") && !(ent.plan.code === p.code && ent.status === "active") && (
+                <SubscribeButton plan={p.code} label={current?.status === "created" && current.planCode === p.code ? "Continue to payment" : `Subscribe to ${p.name}`} />
+              )}
             </li>
           ))}
         </ul>
-        <Alert tone="neutral" className="mt-4">
-          Online payment is not enabled yet. To change plans, <Link href="/contact" className="underline">contact us</Link> and we will activate it for this workspace.
-        </Alert>
+        {!billingState.configured ? (
+          <Alert tone="neutral" className="mt-4">
+            Online payment is not enabled on this installation. To change plans, <Link href="/contact" className="underline">contact us</Link> and we will activate it for this workspace.
+          </Alert>
+        ) : (
+          <div className="mt-4 space-y-3 text-sm">
+            {current && (
+              <div className="flex flex-wrap items-center gap-3 rounded-md border border-line p-3">
+                <span>
+                  Subscription: <Badge tone={current.status === "active" || current.status === "authenticated" ? "ok" : current.status === "pending" ? "warn" : "neutral"}>{current.status}</Badge>{" "}
+                  {current.cancelAtCycleEnd && current.currentEnd ? `· ends ${formatDate(new Date(current.currentEnd))}` : current.currentEnd ? `· renews ${formatDate(new Date(current.currentEnd))}` : ""}
+                </span>
+                {isOwner && <RefreshBilling />}
+                {isOwner && !current.cancelAtCycleEnd && <CancelSubscription endsAt={current.currentEnd && current.status !== "created" ? formatDate(new Date(current.currentEnd)) : null} />}
+              </div>
+            )}
+            <p className="text-muted">
+              Payments are processed by Razorpay on its own secure page; StockPilot never sees card or UPI details. Prices exclude GST. Your plan changes as soon as Razorpay confirms the payment.
+              {!isOwner && " Only the workspace owner can change the plan."}
+            </p>
+          </div>
+        )}
       </Panel>
       <Panel title="Services for this installation">
         <ul className="space-y-1.5 text-sm">

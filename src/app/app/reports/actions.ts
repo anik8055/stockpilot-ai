@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { runAction, type ActionResult } from "@/lib/action-result";
 import { rateLimit } from "@/lib/auth/rate-limit";
@@ -33,5 +34,18 @@ export async function generateReportAction(_: ActionResult | null, fd: FormData)
     }
     const id = await tx(t, async (db) => saveReport(db, t, await buildWeeklyReport(db, t.businessId, t.business.settings.analysis, t.business.timezone, { start, end })));
     redirect(`/app/reports/${id}`);
+  });
+}
+
+export async function weeklyEmailAction(_: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  return runAction("report.schedule", async () => {
+    const t = await requireTenant("settings.manage");
+    const on = fd.get("enabled") === "on";
+    await tx(t, async (db) => {
+      await db.query("UPDATE businesses SET weekly_report_email = $2, updated_at = now() WHERE id = $1", [t.businessId, on]);
+      await db.query("INSERT INTO audit_events (business_id, actor_user_id, action, entity_type, metadata) VALUES ($1,$2,'report.schedule_changed','business',$3)", [t.businessId, t.userId, JSON.stringify({ enabled: on })]);
+    });
+    revalidatePath("/app/reports");
+    return { ok: true, message: on ? "Weekly report emails switched on." : "Weekly report emails switched off." };
   });
 }

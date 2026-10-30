@@ -1,4 +1,5 @@
 import "server-only";
+import { cancelSubscriptionsForDeletion } from "@/lib/services/billing";
 import { z } from "zod";
 import { dummyVerify, hashPassword, passwordSchema, verifyPassword } from "@/lib/auth/password";
 import { hashToken, newToken } from "@/lib/auth/tokens";
@@ -95,6 +96,16 @@ export async function changePassword(userId: string, current: string, next: stri
 export async function deleteAccount(userId: string, password: string): Promise<{ deletedWorkspaces: number }> {
   const user = await withAdmin((tx) => tx.one<{ password_hash: string }>("SELECT password_hash FROM users WHERE id = $1", [userId]));
   if (!(await verifyPassword(user.password_hash, password))) throw new AppError("Password is incorrect.", 400, "bad_password");
+  // Stop any paid subscriptions of workspaces that will be deleted before deleting anything.
+  const soleOwned = await withAdmin((tx) =>
+    tx.query<{ business_id: string }>(
+      `SELECT m.business_id FROM memberships m
+        WHERE m.user_id = $1 AND m.role = 'owner'
+          AND NOT EXISTS (SELECT 1 FROM memberships o WHERE o.business_id = m.business_id AND o.role = 'owner' AND o.user_id <> $1)`,
+      [userId],
+    ),
+  );
+  await cancelSubscriptionsForDeletion(soleOwned.map((r) => r.business_id));
   const result = await withAdmin(async (tx) => {
     const sole = await tx.query<{ business_id: string }>(
       `SELECT m.business_id FROM memberships m
