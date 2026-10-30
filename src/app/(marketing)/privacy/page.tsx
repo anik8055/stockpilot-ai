@@ -15,6 +15,7 @@ export default function PrivacyPage() {
         <li><strong>Uploaded files:</strong> spreadsheets you import and supplier invoices you upload, kept in private storage so you can download them again and so imports can be audited.</li>
         <li><strong>Activity records:</strong> an audit log of important actions (imports, stock changes, purchase orders) and counts of AI requests for plan limits.</li>
         <li><strong>Sign-in sessions:</strong> a session cookie and the browser type, so you stay signed in.</li>
+        <li><strong>Billing:</strong> if you buy a plan online, the subscription ID, plan and status that Razorpay reports to us. Card, UPI and bank details are entered on Razorpay&apos;s page and never reach StockPilot.</li>
         <li><strong>Demo requests:</strong> the details you type into the contact form.</li>
       </ul>
 
@@ -23,6 +24,9 @@ export default function PrivacyPage() {
 
       <h2>AI features</h2>
       <p>When you use Ask StockPilot or invoice reading with an AI provider switched on, a small, filtered extract needed to answer the question — for example totals and the relevant product rows, or the text of the invoice you uploaded — is sent to that provider. Your whole database is never sent. The workspace owner can see whether AI is enabled in Settings.</p>
+
+      <h2>Service providers</h2>
+      <p>We use a hosting provider and database provider to run the service, an email provider to send account and report emails, Razorpay for payments (only if you buy online) and, if switched on, an AI provider as described above. They process data only to provide these services to us.</p>
 
       <h2>Who can see your data</h2>
       <p>Only members of your workspace. Each workspace is isolated in the database, and every request is checked against your membership. Owners and administrators can add or remove members.</p>

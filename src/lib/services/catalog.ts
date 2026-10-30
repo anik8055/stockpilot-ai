@@ -99,8 +99,9 @@ const SORTS: Record<NonNullable<ProductListParams["sort"]>, string> = {
 };
 
 export async function listProducts(db: Tx, businessId: string, params: ProductListParams) {
-  const pageSize = Math.min(200, Math.max(10, params.pageSize ?? 50));
-  const page = Math.max(1, params.page ?? 1);
+  // Integers only: these values are written into LIMIT/OFFSET.
+  const pageSize = Math.min(200, Math.max(10, Math.floor(Number(params.pageSize) || 50)));
+  const page = Math.min(100_000, Math.max(1, Math.floor(Number(params.page) || 1)));
   const where: string[] = ["p.business_id = $1"];
   const args: unknown[] = [businessId];
   const add = (sql: string, v: unknown) => {

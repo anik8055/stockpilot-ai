@@ -15,7 +15,8 @@ device; **Not built** = deliberately left out.
 | 5 | Invoice extraction (PDF text, rules, optional AI, OCR optional), review, draft receipts; Ask StockPilot; weekly reports | Done |
 | 6 | Plans/entitlements, quotas, AI cost controls, settings, audit log, deletion, tests, CI, Docker, deployment docs | Done |
 | 7 | Capacitor Android project | Done (code) — **APK not built, not device-tested** (Android SDK downloads blocked in the build environment) |
-| 8 | Final audit: lint, typecheck, 148 Vitest, production build, 11 Playwright — all passing (29 Oct 2026) | Done |
+| 8 | Final audit (29 Oct 2026) | Done |
+| 9 | Follow-up (30 Oct 2026): Razorpay billing, weekly report emails, S3 driver verification, standalone/Docker bundle verification, security pass. Lint, typecheck, 167 Vitest (+3 live-S3 tests run separately), build, 12 Playwright — all passing | Done |
 
 ## Feature checklist
 
@@ -32,13 +33,14 @@ device; **Not built** = deliberately left out.
 | Purchasing: suppliers, draft POs, PDF, statuses, partial receipts, ledger | Done | PO "sent" is a status; no email sending of POs |
 | AI invoice extraction with checks, matching, duplicates, editable review, stock only after confirmation | Done | Scanned/photo invoices need `OCR_PROVIDER=tesseract_cli` (Docker) |
 | Ask StockPilot: server tools, deterministic numbers, validated output, works without AI | Done | Live Groq call **not** tested (no key); provider tested with a stub |
-| Weekly report: web, PDF, CSV, assumptions; no fake scheduling | Done | Generated on demand; no scheduled email |
+| Weekly report: web, PDF, CSV, assumptions; no fake scheduling | Done | On demand, plus opt-in Monday email via a real scheduler endpoint (needs `CRON_SECRET` + email provider) |
 | Plan entitlements enforced server-side, trial, usage quotas | Done | |
-| Payments | **Not built** | Plans changed manually (SQL in DEPLOYMENT.md); Razorpay is the next step |
+| Payments (Razorpay subscriptions) | Done — tested with a local Razorpay stand-in | **Not yet run against Razorpay itself** (its API is unreachable from the build environment): do the test-mode run in DEPLOYMENT.md |
 | AI cost controls: quotas, row caps, token caps, timeout, usage log | Done | |
 | Tests: unit, integration (real Postgres), e2e (Playwright) | Done | |
-| Docker image, CI workflow | Written | Docker build not run here; CI not run on GitHub (no remote) |
-| S3 storage driver | Written | **Not tested against a live bucket** |
+| Docker image | Written | Image not built here (Docker Hub unreachable); the standalone bundle it runs passed the full e2e suite in production mode |
+| CI workflow | Written | Runs on GitHub once the repository receives the code |
+| S3 storage driver | Done | Signatures match AWS's SDK; passed against a local S3 server with signature checks; not yet run on your bucket |
 | Android (Capacitor) | Written | Not built, not on a device, not published |
 
 ## Needs you
@@ -46,8 +48,8 @@ device; **Not built** = deliberately left out.
 1. Hosting account (Vercel Pro or a Docker host), domain and DNS.
 2. Managed Postgres (e.g. Supabase Pro) and a private S3-compatible bucket.
 3. Optional: Groq API key and a current production model ID.
-4. Email provider (Resend) for password-reset emails.
-5. Razorpay account, if you want online payments.
+4. Email provider (Resend) for password-reset and weekly report emails; `CRON_SECRET` for the Monday schedule.
+5. Razorpay account (test mode first): plans, API keys, webhook — see DEPLOYMENT.md.
 6. Legal review of `/terms` and `/privacy` (written as plain-language drafts, not legal advice); GST registration on invoices you issue.
 7. Penetration test / security review before taking real customer data.
 8. Android Studio to build, sign and device-test the app; a Google Play developer account.

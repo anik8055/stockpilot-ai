@@ -13,6 +13,8 @@ export default function TermsPage() {
       <p>You own the data you upload. You are responsible for having the right to upload it. You can export or delete it at any time, as described on the privacy page.</p>
       <h2>Trial and plans</h2>
       <p>The free trial lasts 14 days. After it ends, workspaces continue with Starter features until a paid plan is activated. Usage limits for each plan are shown on the pricing page.</p>
+      <h2>Payments and cancellation</h2>
+      <p>Paid plans bought online are monthly subscriptions processed by Razorpay and renew until cancelled. The workspace owner can cancel from Settings; the plan stays active until the end of the period already paid for, after which Starter features apply. No data is deleted when a plan ends.</p>
       <h2>Availability</h2>
       <p>We aim to keep the service available and your data safe, but during early access we cannot guarantee uninterrupted service. Keep your billing system as your record of accounts.</p>
     </article>

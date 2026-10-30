@@ -28,7 +28,8 @@ Work through this in order. Nothing is live until step 3 is done and `/api/healt
 
 ## 4. Business
 - [ ] Prices final (they are indicative in the `plans` table); GST treatment decided
-- [ ] Payments: Razorpay integration built and tested in test mode — or a manual invoicing process documented
+- [ ] Razorpay plans created with amounts matching the `plans` table; keys and webhook configured; full subscribe → pay → cancel run in **test mode**, then live
+- [ ] `CRON_SECRET` set; switch on weekly email for your own workspace and confirm the Monday email arrives
 - [ ] Support email monitored; demo-request inbox (table `demo_requests`) checked daily
 - [ ] Error monitoring (e.g. Sentry) and uptime check on `/api/health`
 

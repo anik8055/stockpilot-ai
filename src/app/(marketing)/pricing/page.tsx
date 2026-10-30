@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { billingConfigured } from "@/lib/services/billing";
 import { connection } from "next/server";
 import { LinkButton } from "@/components/ui";
 import { getPublicPlans, type PublicPlan } from "@/lib/services/public";
@@ -75,7 +76,11 @@ export default async function PricingPage() {
       </div>
       <div className="mt-10 max-w-3xl space-y-2 text-sm text-muted">
         <p>Prices are indicative and exclude GST. They may change before general availability; existing customers will be told in advance.</p>
-        <p>Online payment is not yet enabled. After your trial we will contact you to activate a plan, or you can continue on Starter features.</p>
+        {billingConfigured() ? (
+          <p>Starter and Growth can be bought online from Settings → Plan &amp; usage (owners only). Payments are handled by Razorpay; subscriptions renew monthly until you cancel.</p>
+        ) : (
+          <p>Online payment is not yet enabled. After your trial we will contact you to activate a plan, or you can continue on Starter features.</p>
+        )}
       </div>
     </div>
   );

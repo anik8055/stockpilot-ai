@@ -26,4 +26,8 @@ test("API routes reject anonymous requests", async ({ request }) => {
   expect(r.status()).toBe(401);
   const up = await request.post("/api/imports", { multipart: { kind: "products", file: { name: "a.csv", mimeType: "text/csv", buffer: Buffer.from("SKU,Name\nA,B") } } });
   expect(up.status()).toBe(401);
+  // Payment webhooks need Razorpay's signature; the weekly-report trigger needs the scheduler secret (off here → 404).
+  const hook = await request.post("/api/billing/razorpay/webhook", { data: { event: "subscription.activated" }, headers: { "x-razorpay-signature": "0".repeat(64) } });
+  expect(hook.status()).toBe(401);
+  expect((await request.get("/api/cron/weekly-reports")).status()).toBe(404);
 });

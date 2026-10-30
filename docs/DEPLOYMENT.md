@@ -37,7 +37,7 @@ Supabase pricing (supabase.com/pricing). Prices are in USD and exclude GST.
 ## B. Docker (single server)
 
 ```bash
-docker build -t stockpilot .
+docker build -t stockpilot .   # not built in the development environment (Docker Hub was unreachable); the same standalone bundle was tested end to end
 docker run -d --name stockpilot -p 3000:3000 --env-file .env.production \
   -v stockpilot-data:/app/.data stockpilot
 docker exec stockpilot node db/migrate.mjs
@@ -63,9 +63,10 @@ the host's environment settings, never committed.
 | Managed Postgres + private bucket | Not done — needs you |
 | Groq API key and model choice | Optional; app works without it |
 | Email provider (Resend) for password-reset emails | Needed for production password resets; until then reset emails are not delivered (they are logged only in development) |
-| Razorpay (payments) | Not integrated — plans are switched manually (see below) |
+| Razorpay (payments) | Built and tested against a local stand-in for Razorpay; needs your Razorpay account and a test-mode run (see below) |
+| Weekly report emails | Built; needs an email provider and `CRON_SECRET` (see below) |
 
-## Changing a workspace's plan (until payments are integrated)
+## Changing a workspace's plan manually (Business plans, or without online payment)
 
 ```sql
 UPDATE businesses SET plan_code = 'growth', plan_status = 'active', trial_ends_at = NULL WHERE id = '<business id>';
@@ -73,11 +74,51 @@ UPDATE businesses SET plan_code = 'growth', plan_status = 'active', trial_ends_a
 Plan limits and indicative prices live in the `plans` table (see `db/migrations/0002_plans.sql`); change them with a new
 migration so every environment stays in sync.
 
-## Payments (next step, not implemented)
+## Online payments (Razorpay subscriptions)
 
-When Razorpay credentials are available: create orders/subscriptions server-side, verify the payment signature and
-webhook signature (HMAC-SHA256 with the webhook secret), process webhooks idempotently by event ID, and only then
-update `businesses.plan_code/plan_status`. Do not mark payments as working until tested in Razorpay's test mode.
+How it works: the workspace owner clicks *Subscribe* in Settings → Plan & usage → StockPilot creates a Razorpay
+subscription on the server and sends the owner to Razorpay's payment page → Razorpay sends signed webhooks →
+StockPilot verifies the signature (HMAC-SHA256 of the raw body), skips already-processed event IDs, **re-reads the
+subscription from Razorpay's API** (so late or out-of-order events can't undo a newer state) and only then changes the
+plan. Cancelling stops renewals at the end of the paid period. Deleting a workspace or account first cancels any open
+subscription and refuses to delete if Razorpay can't be reached. The app database role cannot change plan columns.
+
+Setup (do it in **Test mode** first):
+1. Razorpay dashboard → Subscriptions → Plans: create a monthly plan for Starter and Growth (amounts in paise).
+2. Settings → API Keys: generate a key; set `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`.
+3. Settings → Webhooks: URL `https://<domain>/api/billing/razorpay/webhook`, a strong secret (`RAZORPAY_WEBHOOK_SECRET`), and the
+   events `subscription.authenticated`, `subscription.activated`, `subscription.charged`, `subscription.pending`,
+   `subscription.halted`, `subscription.cancelled`, `subscription.completed`, `subscription.updated`.
+4. `RAZORPAY_PLAN_IDS=starter:plan_…,growth:plan_…`, redeploy.
+5. Test: subscribe with a Razorpay test card/UPI, confirm the plan turns Growth, cancel, check Settings shows the end
+   date. Watch Razorpay → Webhooks for delivery failures. Then repeat with live keys.
+
+Make sure the amounts you configure in Razorpay match the prices in the `plans` table (shown on the pricing page),
+decide your GST invoicing (Razorpay can send invoices; GST registration is your responsibility), and have the terms
+reviewed. Business (custom) plans are still activated manually with the SQL above.
+
+| Status Razorpay reports | Effect on the workspace |
+|---|---|
+| authenticated, active | Plan switched to the paid plan, status active |
+| pending (renewal failed, retrying) | Plan kept, status past_due, warning shown |
+| halted, cancelled, completed, expired | Status cancelled → Starter features (data kept), unless another subscription is active |
+
+## Weekly report emails
+
+Owners/admins switch this on per workspace on the Reports page. Every Monday the scheduler calls
+`/api/cron/weekly-reports`; for each opted-in workspace StockPilot creates last week's (Mon–Sun) report and emails owners
+and admins a short summary with a link (no attachments). Calling it twice in a week does nothing the second time.
+
+- **Vercel:** `vercel.json` schedules it for Monday 03:30 UTC (09:00 IST). Set `CRON_SECRET`; Vercel sends it automatically.
+- **Docker / any server:** add a cron job: `30 3 * * 1 curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://<domain>/api/cron/weekly-reports`
+- Needs `EMAIL_PROVIDER=resend` (and a verified sending domain) — otherwise reports are still created but no email is sent.
+
+## Testing the S3 driver
+
+The S3 signer is checked against AWS's own SDK (`tests/unit/storage.test.ts`). To run the live tests against any
+S3-compatible bucket (e.g. a Supabase test bucket), set `S3_TEST_ENDPOINT`, `S3_TEST_BUCKET`, `S3_TEST_ACCESS_KEY_ID`,
+`S3_TEST_SECRET_ACCESS_KEY` (and `S3_TEST_REGION`) and run `npx vitest run tests/integration/s3-storage.test.ts`. It
+writes and deletes about 1,000 small objects under a random prefix.
 
 ## Troubleshooting
 

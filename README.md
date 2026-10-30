@@ -4,8 +4,9 @@ Inventory intelligence for Indian wholesalers, distributors, hardware shops, ele
 spare-parts dealers. Customers import the Excel/CSV exports they already have (Tally, Busy, Marg or plain sheets) and see
 what to reorder, what is not selling, and how much money is tied up in stock — without replacing their billing software.
 
-> **Status:** working MVP, tested locally (see *Test results*). It has **not** been deployed anywhere, payments are not
-> integrated, and the Android project has been generated but not built or run on a device. See
+> **Status:** working MVP, tested locally (see *Test results*). It has **not** been deployed anywhere; online payments
+> are built but have not been run against Razorpay itself (only a local stand-in), and the Android project has been
+> generated but not built or run on a device. See
 > [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md) for the full checklist.
 
 ## What it does
@@ -19,8 +20,9 @@ what to reorder, what is not selling, and how much money is tied up in stock —
 | Purchasing | Supplier-wise draft POs, PO PDF, "mark as sent", partial/idempotent goods receipts |
 | Supplier invoices | PDF text extraction → rule-based structuring → optional AI structuring of the text → arithmetic checks → conservative SKU matching → editable review → draft receipt |
 | Ask StockPilot | Read-only data tools compute every figure; the AI only routes and explains, and explanations with figures not in the data are discarded; works with AI off |
-| Reports | Weekly report on screen, PDF and CSV, with assumptions and data gaps |
+| Reports | Weekly report on screen, PDF and CSV, with assumptions and data gaps; optional Monday email to owners/admins |
 | SaaS | Multi-tenant workspaces with RLS, roles, join codes, plan entitlements, trial, usage quotas, audit log, account/workspace deletion |
+| Billing | Razorpay subscriptions: hosted payment page, signed + de-duplicated webhooks, cancel at period end, cancel-on-delete |
 
 ## Stack
 
@@ -65,16 +67,21 @@ Password-reset emails are printed to the server console in development when no e
 | `npm run db:migrate` | Apply pending migrations (`node db/migrate.mjs`) |
 | `npm run db:seed` | Create `demo@stockpilot.local` with a synthetic demo workspace (refuses to run in production) |
 | `npm test` | Unit + integration tests (needs the `stockpilot_test` database: `createdb -O stockpilot stockpilot_test`) |
-| `npm run test:e2e` | Playwright end-to-end tests against a production build (`npm run build` first). Set `PLAYWRIGHT_CHROMIUM_PATH` if you use a system Chromium |
+| `npm run test:e2e` | Playwright end-to-end tests against a production build (`npm run build` first); starts a local Razorpay stand-in on port 3199. Set `PLAYWRIGHT_CHROMIUM_PATH` if you use a system Chromium |
 
 Integration tests **drop and recreate** the schema of `stockpilot_test` only (they refuse any other database name).
 
-## Test results (last run)
+## Test results (last run: 30 Oct 2026)
 
-- Vitest: **148 tests passing** across 13 files (unit: engines, parsing, invoices, AI guards; integration against real
-  Postgres: tenant isolation, imports, purchasing, invoices, assistant, reports, entitlements, deletion).
-- Playwright: **11 passing** — 10 desktop (auth, register → business → imports with a mapping fix → dashboard → purchase
-  list → draft PO → PDF → receive goods → invoice review → report → assistant) and 1 mobile (Pixel 7 layout).
+- Vitest: **167 passing, 3 skipped** across 17 files (unit: engines, parsing, invoices, AI guards, S3 signing checked
+  against AWS's SDK; integration against real Postgres: tenant isolation, imports, purchasing, invoices, assistant,
+  reports, entitlements, deletion, billing, scheduled reports). The 3 skipped tests run against a live S3-compatible
+  bucket when `S3_TEST_*` is set — they passed against a local S3 server with signature checking.
+- Playwright: **12 passing** — 11 desktop (auth and anonymous-access checks, register → business → imports with a
+  mapping fix → dashboard → purchase list → draft PO → PDF → receive goods → invoice review → report → assistant;
+  subscribe → pay on a simulated Razorpay page → plan activated by signed webhook → cancel) and 1 mobile (Pixel 7).
+  The same suite also passed against the standalone production bundle that the Docker image runs.
+- `npm audit`: 0 known vulnerabilities. Lint and TypeScript clean.
 
 ## Configuration
 

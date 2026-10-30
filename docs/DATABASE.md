@@ -8,7 +8,7 @@ PostgreSQL 15+ (developed on 16). Migrations live in `db/migrations/*.sql`, are 
 | Role | Used by | Rights |
 |---|---|---|
 | owner (e.g. `stockpilot`, or `postgres` on Supabase) | migrations, auth/session queries, workspace provisioning, rate limits, seeding | owns all objects; bypasses RLS as table owner |
-| `stockpilot_app` | every tenant query | `NOBYPASSRLS`; DML on tenant tables only; no access to `users`, `sessions`, `password_reset_tokens`, `rate_limits`, `demo_requests`, `outbound_emails`; no UPDATE/DELETE on `inventory_movements`, `audit_events`, `stock_snapshot_lines` |
+| `stockpilot_app` | every tenant query | `NOBYPASSRLS`; DML on tenant tables only; on `businesses` only profile/settings columns can be updated (never plan fields); no access to `users`, `sessions`, `password_reset_tokens`, `rate_limits`, `demo_requests`, `outbound_emails`; no UPDATE/DELETE on `inventory_movements`, `audit_events`, `stock_snapshot_lines` |
 
 ## Tenant isolation
 
@@ -32,6 +32,7 @@ product, supplier or document even through the owner connection.
 - **Purchasing:** `purchase_orders`, `purchase_order_lines` (`quantity_base` generated column, `received_qty_base`), `goods_receipts` (unique `idempotency_key`), `goods_receipt_lines`.
 - **Invoices:** `invoice_documents` (unique file hash per business), `invoice_lines` (matched product, method, score).
 - **Imports:** `import_jobs`, `import_row_errors`, `import_mappings`.
+- **Billing:** `billing_subscriptions` (Razorpay subscription per workspace, status mirrored from Razorpay; members can read, only the owner connection writes), `billing_events` (processed webhook event IDs; not visible to the app role). `businesses.plan_period_end`, `businesses.weekly_report_email`; `reports.scheduled` (unique per workspace and week).
 - **Other:** `reports` (frozen JSON), `audit_events` (append-only), `ai_usage` (quota and cost tracking), `assistant_messages`, `document_counters`, `rate_limits`, `demo_requests`, `outbound_emails`.
 
 ## Stock accounting model

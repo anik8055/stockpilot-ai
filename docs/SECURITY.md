@@ -7,7 +7,9 @@
 | CSRF | Server Actions check `Origin` against host (Next.js); route handlers that mutate require the session cookie with SameSite=Lax | Next.js |
 | Tenant isolation | Postgres RLS with a non-bypass role + membership re-check; business ID only from the server-side session; composite FKs | `db/migrations/0001_init.sql`, `src/lib/db`, `src/lib/tenant.ts`; tests in `tests/integration/tenant-isolation.test.ts` |
 | Authorisation | Role → permission matrix enforced in every action and route | `src/lib/auth/permissions.ts` |
-| Plan limits | Enforced in services, not only hidden in the UI | `src/lib/services/entitlements.ts` |
+| Plan limits | Enforced in services, not only hidden in the UI; the app database role has column-level UPDATE rights on `businesses` and cannot change plan fields | `src/lib/services/entitlements.ts`, `db/migrations/0005_billing.sql` |
+| Payments | Razorpay hosted page (no card/UPI data touches StockPilot); webhook HMAC-SHA256 on the raw body with constant-time compare; event-ID de-duplication; state re-read from Razorpay's API; only subscriptions StockPilot created are honoured; owner-only billing actions | `src/lib/services/billing.ts`; tests in `tests/integration/billing.test.ts`, `tests/e2e/billing.spec.ts` |
+| Scheduled jobs | `/api/cron/weekly-reports` disabled unless `CRON_SECRET` is set; bearer token compared in constant time | `src/app/api/cron/weekly-reports/route.ts` |
 | Rate limiting | Postgres fixed window: sign-in (IP + email), sign-up, password reset, uploads, imports, assistant, reports | `src/lib/auth/rate-limit.ts` |
 | Uploads | Size limits; type from magic bytes; .xls/binary rejected; formulas read as cached values, never evaluated; pdf.js with eval disabled; OCR runs in a temp dir with timeouts; files stored privately per business and served with `Content-Security-Policy: sandbox` | `src/lib/services/spreadsheet.ts`, `invoice-text.ts`, `src/app/api/invoices/[id]/file` |
 | CSV exports | Formula-injection guard (`=`, `+`, `-`, `@` prefixed) | `src/lib/domain/imports/values.ts` |
@@ -35,4 +37,5 @@ test and a legal review of the terms and privacy page are launch-checklist items
 - Password-reset emails require an email provider in production.
 - No 2FA yet.
 - Rate limiting is per instance of Postgres, fixed-window (simple, not burst-smoothing).
-- The S3 storage driver is implemented with SigV4 but has not been tested against a live bucket in this environment.
+- The S3 driver is verified against AWS's SDK signer and a local S3-compatible server with signature checking; it has not yet been run against your production bucket.
+- Dependency audit (`npm audit`, 30 Oct 2026): 0 known vulnerabilities. This is not a penetration test.

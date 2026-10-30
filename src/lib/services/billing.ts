@@ -174,7 +174,8 @@ export async function startSubscription(ctx: Ctx, planCode: string): Promise<str
 
   // 120 monthly cycles (10 years); the customer can cancel any time.
   const sub = await c.createSubscription({ planId, totalCount: 120, notes: { business_id: ctx.businessId, plan_code: planCode } });
-  if (!sub.short_url) throw new AppError("The payment provider did not return a payment link. Please try again.", 502, "billing_error");
+  // https only; plain http is accepted only for a localhost test double (real Razorpay links are https://rzp.io/…).
+  if (!sub.short_url || !/^(https:\/\/|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/)/.test(sub.short_url)) throw new AppError("The payment provider did not return a payment link. Please try again.", 502, "billing_error");
   await withAdmin(async (tx) => {
     await tx.query(
       `INSERT INTO billing_subscriptions (business_id, provider_subscription_id, provider_plan_id, plan_code, status, short_url, current_end, created_by)
